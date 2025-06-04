@@ -2,19 +2,22 @@
 
 All notable changes to Pulsify will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## June 4, 2025
+
 ### Added
-- Comprehensive changelog to track user-facing improvements
+- Changelog to track user-facing improvements 📝
 
 ### Changed
-- **Code Editor**: Updated formula editor to use beautiful Catppuccin color themes that automatically switch between light and dark modes based on your system preferences
+- **Code Editor**: Now switches automatically between light and dark themes based on your system preferences 🌙
+- **Forms**: Updated with consistent styling across the app
 
 ### Improved  
-- **User Experience**: Code editor now provides better syntax highlighting and visual consistency across the application
+- **Dark Mode**: Better theme switching throughout the interface ✨
+- **User Interface**: More cohesive visual design
 
 ---
 
@@ -27,5 +30,3 @@ This changelog focuses on improvements and features that directly impact your ex
 - **Improved**: Enhancements to performance, usability, or user experience
 - **Fixed**: Bug fixes and issue resolutions
 - **Security**: Security-related updates
-
-For technical details and development changes, see the commit history in our development repository.
