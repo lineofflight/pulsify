@@ -1,10 +1,8 @@
 # Pulsify
 
-Automated repricing for Amazon sellers. Use our default algorithm or create custom pricing rules that work for your business.
+Code-first automation for Amazon sellers and vendors.
 
-## Getting Started
-
-Check out our [Documentation](#) to get started with setting up automated repricing for your listings.
+Write JavaScript that reacts to SP-API notifications. Automate pricing, advertising, and inventory. Your algorithm, not ours.
 
 ## Need Help?
 
@@ -13,14 +11,14 @@ Check out our [Documentation](#) to get started with setting up automated repric
 Connect with other Pulsify users in our [Discussions](../../discussions) section:
 
 - Ask questions and get advice
-- Share your pricing strategies  
-- Discuss custom algorithms and best practices
+- Share your automations
+- Discuss strategies and best practices
 
 ### Issues
 
 Found a bug or have a feature request?
 
-- **Report a Bug**: [Open an issue](../../issues/new) with details about what's not working
+- **Report a Bug**: [Open an issue](../../issues/new)
 - **Feature Requests**: [Create an issue](../../issues/new) with the `enhancement` tag
 
 ---
