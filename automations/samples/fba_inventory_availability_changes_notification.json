@@ -1,0 +1,28 @@
+{
+  "NotificationVersion": "1.0",
+  "NotificationType": "FBA_INVENTORY_AVAILABILITY_CHANGES",
+  "PayloadVersion": "1.0",
+  "EventTime": "2024-11-18T14:31:09.305Z",
+  "NotificationMetadata": {
+    "ApplicationId": "amzn1.sellerapps.app.00000000-0000-0000-0000-000000000000",
+    "SubscriptionId": "00000000-0000-0000-0000-000000000000",
+    "PublishTime": "2024-11-18T14:31:09.453Z",
+    "NotificationId": "00000000-0000-0000-0000-000000000000"
+  },
+  "Payload": {
+    "SellerId": "A1EXAMPLE00001",
+    "SKU": "EXAMPLE-SKU-001",
+    "FNSKU": "X00EXAMPLE1",
+    "ASIN": "B00EXAMPLE1",
+    "FulfillmentInventoryByMarketplace": [
+      {
+        "MarketplaceId": "ATVPDKIKX0DER",
+        "FulfillableQuantity": 25
+      },
+      {
+        "MarketplaceId": "A2EUQ1WTGCTBG2",
+        "FulfillableQuantity": 7
+      }
+    ]
+  }
+}

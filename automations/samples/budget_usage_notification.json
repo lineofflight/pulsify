@@ -1,0 +1,12 @@
+{
+  "notificationType": "BUDGET_USAGE",
+  "profile_id": 888888888,
+  "marketplace_id": "ATVPDKIKX0DER",
+  "advertiser_id": "ENTITY1234567890",
+  "budget_scope_id": "11111",
+  "budget_scope_type": "CAMPAIGN",
+  "advertising_product_type": "sp",
+  "budget": 50.0,
+  "budget_usage_percentage": 92.5,
+  "usage_updated_timestamp": "2026-06-06T12:00:00Z"
+}

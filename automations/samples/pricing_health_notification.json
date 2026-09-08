@@ -1,0 +1,54 @@
+{
+  "notificationVersion": "1.0",
+  "notificationType": "PRICING_HEALTH",
+  "payloadVersion": "1.0",
+  "eventTime": "2024-01-15T10:30:00Z",
+  "notificationMetadata": {
+    "applicationId": "amzn1.sellerapps.app.00000000-0000-0000-0000-000000000000",
+    "subscriptionId": "00000000-0000-0000-0000-000000000000",
+    "publishTime": "2024-01-15T10:30:00Z",
+    "notificationId": "00000000-0000-0000-0000-000000000000"
+  },
+  "payload": {
+    "issueType": "BuyBoxDisqualification",
+    "sellerId": "A1EXAMPLE00001",
+    "offerChangeTrigger": {
+      "marketplaceId": "ATVPDKIKX0DER",
+      "asin": "B00EXAMPLE01",
+      "itemCondition": "New",
+      "timeOfOfferChange": "2024-01-15T10:30:00Z"
+    },
+    "merchantOffer": {
+      "condition": "New",
+      "fulfillmentType": "MFN",
+      "listingPrice": { "amount": "24.99", "currencyCode": "USD" },
+      "shipping": { "amount": "4.99", "currencyCode": "USD" },
+      "landedPrice": { "amount": "29.98", "currencyCode": "USD" }
+    },
+    "summary": {
+      "numberOfOffers": [
+        { "condition": "New", "fulfillmentType": "MFN", "offerCount": 15 },
+        { "condition": "New", "fulfillmentType": "AFN", "offerCount": 3 }
+      ],
+      "buyBoxEligibleOffers": [
+        { "condition": "New", "fulfillmentType": "MFN", "offerCount": 12 },
+        { "condition": "New", "fulfillmentType": "AFN", "offerCount": 3 }
+      ],
+      "referencePrice": {
+        "competitivePriceThreshold": { "amount": "19.99", "currencyCode": "USD" },
+        "averageSellingPrice": { "amount": "22.50", "currencyCode": "USD" }
+      },
+      "buyBoxPrices": [
+        {
+          "condition": "New",
+          "listingPrice": { "amount": "18.99", "currencyCode": "USD" },
+          "shipping": { "amount": "0.00", "currencyCode": "USD" },
+          "landedPrice": { "amount": "18.99", "currencyCode": "USD" }
+        }
+      ],
+      "salesRankings": [
+        { "productCategoryId": "toy_display_on_website", "rank": 12345 }
+      ]
+    }
+  }
+}

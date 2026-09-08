@@ -1,0 +1,111 @@
+{
+  "NotificationVersion": "1.0",
+  "NotificationType": "B2B_ANY_OFFER_CHANGED",
+  "PayloadVersion": "1.0",
+  "EventTime": "2024-11-18T14:31:09.305Z",
+  "NotificationMetadata": {
+    "ApplicationId": "amzn1.sellerapps.app.00000000-0000-0000-0000-000000000000",
+    "SubscriptionId": "00000000-0000-0000-0000-000000000000",
+    "PublishTime": "2024-11-18T14:31:09.453Z",
+    "NotificationId": "00000000-0000-0000-0000-000000000000"
+  },
+  "Payload": {
+    "B2BAnyOfferChangedNotification": {
+      "SellerId": "A1EXAMPLE00001",
+      "OfferChangeTrigger": {
+        "MarketplaceId": "ATVPDKIKX0DER",
+        "ASIN": "B00EXAMPLE01",
+        "ItemCondition": "new",
+        "TimeOfOfferChange": "2024-11-18T14:31:09.116Z",
+        "OfferChangeType": "Internal"
+      },
+      "Summary": {
+        "NumberOfOffers": [
+          {
+            "Condition": "new",
+            "FulfillmentChannel": "Amazon",
+            "OfferCount": 3
+          }
+        ],
+        "LowestPrices": [
+          {
+            "Condition": "new",
+            "FulfillmentChannel": "Amazon",
+            "LandedPrice": { "Amount": 100.00, "CurrencyCode": "USD" },
+            "ListingPrice": { "Amount": 100.00, "CurrencyCode": "USD" },
+            "Shipping": { "Amount": 0.0, "CurrencyCode": "USD" }
+          }
+        ],
+        "BuyBoxPrices": [
+          {
+            "Condition": "New",
+            "LandedPrice": { "Amount": 100.00, "CurrencyCode": "USD" },
+            "ListingPrice": { "Amount": 100.00, "CurrencyCode": "USD" },
+            "Shipping": { "Amount": 0.0, "CurrencyCode": "USD" }
+          }
+        ],
+        "ListPrice": { "Amount": 150.00, "CurrencyCode": "USD" },
+        "SalesRankings": [
+          { "ProductCategoryId": "example_category", "Rank": 12345 }
+        ],
+        "NumberOfBuyBoxEligibleOffers": [
+          {
+            "Condition": "new",
+            "FulfillmentChannel": "Amazon",
+            "OfferCount": 3
+          }
+        ]
+      },
+      "Offers": [
+        {
+          "SellerId": "A1EXAMPLE00002",
+          "SubCondition": "new",
+          "SellerFeedbackRating": {
+            "FeedbackCount": 5000,
+            "SellerPositiveFeedbackRating": 98
+          },
+          "ShippingTime": {
+            "MinimumHours": 0,
+            "MaximumHours": 0,
+            "AvailabilityType": "NOW",
+            "AvailableDate": ""
+          },
+          "ListingPrice": { "Amount": 100.00, "CurrencyCode": "USD" },
+          "Shipping": { "Amount": 0.0, "CurrencyCode": "USD" },
+          "IsFulfilledByAmazon": true,
+          "IsBuyBoxWinner": true,
+          "PrimeInformation": {
+            "IsOfferPrime": true,
+            "IsOfferNationalPrime": true
+          },
+          "IsFeaturedMerchant": true,
+          "ShipsDomestically": true
+        },
+        {
+          "SellerId": "A1EXAMPLE00003",
+          "SubCondition": "new",
+          "SellerFeedbackRating": {
+            "FeedbackCount": 2500,
+            "SellerPositiveFeedbackRating": 97
+          },
+          "ShippingTime": {
+            "MinimumHours": 0,
+            "MaximumHours": 0,
+            "AvailabilityType": "NOW",
+            "AvailableDate": ""
+          },
+          "ListingPrice": { "Amount": 105.00, "CurrencyCode": "USD" },
+          "Shipping": { "Amount": 0.0, "CurrencyCode": "USD" },
+          "IsFulfilledByAmazon": true,
+          "IsBuyBoxWinner": false,
+          "PrimeInformation": {
+            "IsOfferPrime": true,
+            "IsOfferNationalPrime": true
+          },
+          "IsFeaturedMerchant": true,
+          "ShipsDomestically": true
+        }
+      ]
+    }
+  }
+}

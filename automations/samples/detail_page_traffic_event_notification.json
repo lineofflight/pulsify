@@ -1,0 +1,32 @@
+{
+  "notificationVersion": "2020-09-04",
+  "notificationType": "DETAIL_PAGE_TRAFFIC_EVENT",
+  "payloadVersion": "2020-09-04",
+  "eventTime": "2026-06-06T16:05:32.378Z",
+  "payload": {
+    "detailPageTrafficEvents": [
+      {
+        "accountId": "amzn1.merchant.o.A1EXAMPLE00001",
+        "marketplaceId": "ATVPDKIKX0DER",
+        "startTime": "2026-06-06T15:00:00Z",
+        "endTime": "2026-06-06T16:00:00Z",
+        "asin": "B00032HE0O",
+        "glanceViews": 42
+      },
+      {
+        "accountId": "amzn1.merchant.o.A1EXAMPLE00001",
+        "marketplaceId": "ATVPDKIKX0DER",
+        "startTime": "2026-06-06T15:00:00Z",
+        "endTime": "2026-06-06T16:00:00Z",
+        "asin": "B00094A20U",
+        "glanceViews": 69
+      }
+    ]
+  },
+  "notificationMetadata": {
+    "applicationId": "amzn1.sellerapps.app.00000000-0000-0000-0000-000000000000",
+    "subscriptionId": "00000000-0000-0000-0000-000000000000",
+    "publishTime": "2026-06-06T16:05:32.453Z",
+    "notificationId": "00000000-0000-0000-0000-000000000000"
+  }
+}

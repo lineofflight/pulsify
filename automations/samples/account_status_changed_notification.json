@@ -1,0 +1,18 @@
+{
+  "notificationVersion": "1.0",
+  "notificationType": "ACCOUNT_STATUS_CHANGED",
+  "payloadVersion": "1.0",
+  "eventTime": "2026-05-12T14:31:09.305Z",
+  "payload": {
+    "accountStatusChangeNotification": {
+      "currentAccountStatus": "AT_RISK",
+      "previousAccountStatus": "NORMAL"
+    }
+  },
+  "notificationMetadata": {
+    "applicationId": "amzn1.sellerapps.app.00000000-0000-0000-0000-000000000000",
+    "subscriptionId": "00000000-0000-0000-0000-000000000000",
+    "publishTime": "2026-05-12T14:31:09.453Z",
+    "notificationId": "00000000-0000-0000-0000-000000000000"
+  }
+}

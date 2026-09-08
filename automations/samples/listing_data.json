@@ -1,0 +1,132 @@
+{
+  "listings": [
+    {
+      "asin": "B00EXAMPLE01",
+      "price": 1527,
+      "quantity": 3,
+      "enabled": true,
+      "time_zone": "America/Los_Angeles",
+      "offer": {
+        "featured": true,
+        "buy_box_winner": false,
+        "competitive_price_threshold": 1450,
+        "shipping": 0,
+        "synced_at": "2026-06-06T11:00:00Z"
+      },
+      "listings_item": {
+        "sku": "SAMPLE-SKU",
+        "summaries": [
+          {
+            "marketplaceId": "ATVPDKIKX0DER",
+            "productType": "PRODUCT",
+            "status": ["BUYABLE", "DISCOVERABLE"],
+            "conditionType": "used_good",
+            "createdDate": "2026-01-01T00:00:00Z",
+            "lastUpdatedDate": "2026-06-06T11:00:00Z"
+          }
+        ],
+        "attributes": {
+          "purchasable_offer": [
+            {
+              "currency": "USD",
+              "minimum_seller_allowed_price": [{ "schedule": [{ "value_with_tax": "10.00" }] }],
+              "maximum_seller_allowed_price": [{ "schedule": [{ "value_with_tax": "25.00" }] }]
+            }
+          ],
+          "fc_shelf_life": [{ "value": 540, "unit": "days" }]
+        }
+      },
+      "fba": {
+        "inventory": {
+          "afn-fulfillable-quantity": "3",
+          "afn-warehouse-quantity": "10",
+          "afn-inbound-shipped-quantity": "50",
+          "afn-reserved-quantity": "2",
+          "afn-unsellable-quantity": "0",
+          "afn-researching-quantity": "0",
+          "afn-total-quantity": "62"
+        },
+        "aged_inventory": {
+          "inv-age-0-to-90-days": "0",
+          "inv-age-91-to-180-days": "0",
+          "inv-age-181-to-270-days": "1",
+          "inv-age-271-to-365-days": "2",
+          "inv-age-365-plus-days": "0"
+        },
+        "planning": {
+          "available": "62",
+          "units-shipped-t90": "18",
+          "weeks-of-cover-t90": "31.0",
+          "sell-through": "0.6",
+          "estimated-excess-quantity": "40"
+        }
+      },
+      "mutations": [
+        {
+          "id": "00000000-0000-0000-0000-0000000000m1",
+          "status": "queued",
+          "accepted": null,
+          "payload": {},
+          "created_at": "2026-06-06T11:00:00Z",
+          "submitted_at": null,
+          "submission_id": null,
+          "response": {}
+        }
+      ]
+    }
+  ],
+  "entities": {
+    "campaigns": [
+      {
+        "attributes": {
+          "id": "00000000-0000-0000-0000-0000000000c1",
+          "campaign_id": 11111,
+          "name": "Sample Campaign",
+          "state": "enabled",
+          "budget_amount": 50.0,
+          "targeting_type": "manual"
+        },
+        "asin_count": 12,
+        "metrics": [1500, 45, 22.5, 180.0]
+      }
+    ],
+    "ad_groups": [
+      {
+        "attributes": {
+          "id": "00000000-0000-0000-0000-0000000000a1",
+          "ad_group_id": 22222,
+          "name": "Sample Ad Group",
+          "state": "enabled",
+          "default_bid": 0.75
+        },
+        "asin_count": 3,
+        "metrics": [900, 30, 15.0, 120.0]
+      }
+    ],
+    "ads": [
+      {
+        "attributes": {
+          "id": "00000000-0000-0000-0000-0000000000d1",
+          "ad_id": 33333,
+          "state": "enabled",
+          "asin": "B00EXAMPLE01",
+          "sku": "SAMPLE-SKU-1"
+        }
+      }
+    ],
+    "keywords": [
+      {
+        "attributes": {
+          "id": "00000000-0000-0000-0000-0000000000e1",
+          "target_id": 44444,
+          "expression": "example widget",
+          "match_type": "exact",
+          "state": "enabled",
+          "bid": 0.85,
+          "target_type": "keyword"
+        },
+        "metrics": [400, 12, 6.0, 60.0]
+      }
+    ]
+  }
+}

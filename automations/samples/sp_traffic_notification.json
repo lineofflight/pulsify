@@ -1,0 +1,11 @@
+{
+  "dataset_id": "sp-traffic",
+  "campaign_id": "11111",
+  "time_window_start": "2026-06-06T11:00:00Z",
+  "record_count": 4,
+  "metrics": {
+    "impressions": 400.0,
+    "clicks": 9.0,
+    "cost": 6.1
+  }
+}

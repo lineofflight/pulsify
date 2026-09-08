@@ -1,0 +1,18 @@
+{
+  "NotificationVersion": "1.0",
+  "NotificationType": "LISTINGS_ITEM_MFN_QUANTITY_CHANGE",
+  "PayloadVersion": "1.0",
+  "EventTime": "2024-11-18T14:31:09.305Z",
+  "NotificationMetadata": {
+    "ApplicationId": "amzn1.sellerapps.app.00000000-0000-0000-0000-000000000000",
+    "SubscriptionId": "00000000-0000-0000-0000-000000000000",
+    "PublishTime": "2024-11-18T14:31:09.453Z",
+    "NotificationId": "00000000-0000-0000-0000-000000000000"
+  },
+  "Payload": {
+    "SellerId": "A1EXAMPLE00001",
+    "Sku": "EXAMPLE-SKU-001",
+    "FulfillmentChannelCode": "DEFAULT",
+    "Quantity": 25
+  }
+}

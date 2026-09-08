@@ -1,0 +1,11 @@
+{
+  "dataset_id": "sp-conversion",
+  "campaign_id": "11111",
+  "time_window_start": "2026-06-06T11:00:00Z",
+  "record_count": 2,
+  "metrics": {
+    "conversions": 1.0,
+    "sales": 30.0,
+    "units_ordered": 2.0
+  }
+}

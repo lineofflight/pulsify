@@ -1,0 +1,22 @@
+{
+  "NotificationVersion": "1.0",
+  "NotificationType": "BRANDED_ITEM_CONTENT_CHANGE",
+  "PayloadVersion": "1.0",
+  "EventTime": "2024-11-18T14:31:09.305Z",
+  "NotificationMetadata": {
+    "ApplicationId": "amzn1.sellerapps.app.00000000-0000-0000-0000-000000000000",
+    "SubscriptionId": "00000000-0000-0000-0000-000000000000",
+    "PublishTime": "2024-11-18T14:31:09.453Z",
+    "NotificationId": "00000000-0000-0000-0000-000000000000"
+  },
+  "Payload": {
+    "Asin": "B00EXAMPLE01",
+    "MarketplaceId": "ATVPDKIKX0DER",
+    "BrandName": "Example Brand",
+    "AttributesChanged": [
+      "item_name",
+      "bullet_point",
+      "main_product_image_locator"
+    ]
+  }
+}

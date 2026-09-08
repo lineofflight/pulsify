@@ -1,0 +1,22 @@
+{
+  "NotificationVersion": "2020-09-04",
+  "NotificationType": "REPORT_PROCESSING_FINISHED",
+  "PayloadVersion": "2020-09-04",
+  "EventTime": "2026-07-17T09:30:00.000Z",
+  "NotificationMetadata": {
+    "ApplicationId": "amzn1.sellerapps.app.00000000-0000-0000-0000-000000000000",
+    "SubscriptionId": "00000000-0000-0000-0000-000000000000",
+    "PublishTime": "2026-07-17T09:30:00.000Z",
+    "NotificationId": "00000000-0000-0000-0000-000000000000"
+  },
+  "Payload": {
+    "ReportProcessingFinishedNotification": {
+      "SellerId": "A1EXAMPLE00001",
+      "AccountId": "A1EXAMPLE00001",
+      "ReportId": "12345678901",
+      "ReportType": "GET_MERCHANT_LISTINGS_ALL_DATA",
+      "ProcessingStatus": "DONE",
+      "ReportDocumentId": "amzn1.spdoc.1.3.na.00000000-0000-0000-0000-000000000000"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "notificationType": "CAMPAIGN_CHANGE",
+  "dataset_id": "campaigns",
+  "campaignId": "11111",
+  "accountId": "ENTITY1234567890",
+  "name": "Sample Campaign",
+  "state": "PAUSED",
+  "adProduct": "SPONSORED_PRODUCTS",
+  "budget": { "budget": 50.0, "budgetType": "DAILY" },
+  "targetingSettings": "MANUAL",
+  "lastUpdatedDateTime": "2026-06-06T12:00:00Z"
+}

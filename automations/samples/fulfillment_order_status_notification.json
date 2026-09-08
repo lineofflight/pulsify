@@ -1,0 +1,33 @@
+{
+  "NotificationVersion": "1.0",
+  "NotificationType": "FULFILLMENT_ORDER_STATUS",
+  "PayloadVersion": "1.0",
+  "EventTime": "2026-05-12T14:31:09.305Z",
+  "NotificationMetadata": {
+    "ApplicationId": "amzn1.sellerapps.app.00000000-0000-0000-0000-000000000000",
+    "SubscriptionId": "00000000-0000-0000-0000-000000000000",
+    "PublishTime": "2026-05-12T14:31:09.453Z",
+    "NotificationId": "00000000-0000-0000-0000-000000000000"
+  },
+  "Payload": {
+    "FulfillmentOrderStatusNotification": {
+      "SellerId": "A1EXAMPLE00001",
+      "EventType": "TYPE3945",
+      "StatusUpdatedDateTime": "2026-05-12T14:31:09.305Z",
+      "SellerFulfillmentOrderId": "SFOID2345",
+      "FulfillmentOrderStatus": "COMPLETE",
+      "FulfillmentShipment": {
+        "FulfillmentShipmentStatus": "SHIPPED",
+        "AmazonShipmentId": "ASID49535",
+        "EstimatedArrivalDateTime": "2026-05-13T14:31:09.305Z",
+        "FulfillmentShipmentPackages": [
+          {
+            "PackageNumber": 1,
+            "CarrierCode": "UPS",
+            "TrackingNumber": "1Z84456456573405"
+          }
+        ]
+      }
+    }
+  }
+}

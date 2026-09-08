@@ -1,0 +1,31 @@
+{
+  "name": "@lineofflight/pulsify-automations",
+  "version": "2026.908.0",
+  "description": "TypeScript definitions, reference templates, and sample event payloads for Pulsify automations.",
+  "license": "MIT",
+  "types": "index.d.ts",
+  "files": [
+    "index.d.ts",
+    "templates",
+    "samples",
+    "docs",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lineofflight/pulsify.git",
+    "directory": "automations"
+  },
+  "homepage": "https://github.com/lineofflight/pulsify/tree/main/automations",
+  "keywords": [
+    "pulsify",
+    "amazon",
+    "sp-api",
+    "amazon-ads",
+    "automation",
+    "seller"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

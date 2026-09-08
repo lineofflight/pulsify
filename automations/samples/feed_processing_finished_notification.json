@@ -1,0 +1,22 @@
+{
+  "notificationVersion": "1.0",
+  "notificationType": "FEED_PROCESSING_FINISHED",
+  "payloadVersion": "1.0",
+  "eventTime": "2026-05-12T14:31:09.305Z",
+  "notificationMetadata": {
+    "applicationId": "amzn1.sellerapps.app.00000000-0000-0000-0000-000000000000",
+    "subscriptionId": "00000000-0000-0000-0000-000000000000",
+    "publishTime": "2026-05-12T14:31:09.453Z",
+    "notificationId": "00000000-0000-0000-0000-000000000000"
+  },
+  "payload": {
+    "feedProcessingFinishedNotification": {
+      "accountId": "A1EXAMPLE00001",
+      "sellerId": "A1EXAMPLE00001",
+      "feedId": "00012345678",
+      "feedType": "POST_PRODUCT_PRICING_DATA",
+      "processingStatus": "DONE",
+      "resultFeedDocumentId": "amzn1.tortuga.4.eu.00000000-0000-0000-0000-000000000000"
+    }
+  }
+}

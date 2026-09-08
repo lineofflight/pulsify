@@ -1,0 +1,36 @@
+{
+  "notificationVersion": "2020-09-04",
+  "notificationType": "ITEM_SALES_EVENT_CHANGE",
+  "payloadVersion": "2020-09-04",
+  "eventTime": "2026-05-12T16:05:32.378Z",
+  "payload": {
+    "itemSalesEventChanges": [
+      {
+        "accountId": "amzn1.merchant.o.A1EXAMPLE00001",
+        "marketplaceId": "ATVPDKIKX0DER",
+        "currencyCode": "USD",
+        "startTime": "2026-05-12T15:00:00Z",
+        "endTime": "2026-05-12T16:00:00Z",
+        "asin": "B00032HE0O",
+        "orderedUnits": 9,
+        "orderedRevenue": 80.91
+      },
+      {
+        "accountId": "amzn1.merchant.o.A1EXAMPLE00001",
+        "marketplaceId": "ATVPDKIKX0DER",
+        "currencyCode": "USD",
+        "startTime": "2026-05-12T15:00:00Z",
+        "endTime": "2026-05-12T16:00:00Z",
+        "asin": "B00094A20U",
+        "orderedUnits": 5,
+        "orderedRevenue": 527.6
+      }
+    ]
+  },
+  "notificationMetadata": {
+    "applicationId": "amzn1.sellerapps.app.00000000-0000-0000-0000-000000000000",
+    "subscriptionId": "00000000-0000-0000-0000-000000000000",
+    "publishTime": "2026-05-12T16:05:32.453Z",
+    "notificationId": "00000000-0000-0000-0000-000000000000"
+  }
+}
