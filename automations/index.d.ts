@@ -73,8 +73,8 @@ export interface ListingContext {
     condition: string | null;
     /** Amazon's full condition token, such as used_very_good. Null until the listing item reports it. */
     conditionType: string | null;
-    /** Always a boolean, unlike buyable and discoverable, which go missing while statuses is unset. */
-    deleted: boolean;
+    /** Null while statuses is null. Do not read a null as false. */
+    deleted: boolean | null;
     /** Null while statuses is null. Do not read a null as false. */
     discoverable: boolean | null;
     enabled: boolean;

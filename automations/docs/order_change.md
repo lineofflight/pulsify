@@ -153,7 +153,7 @@ Every currency value on context is in major units (15.27). The list_listings too
 | `listing.ceiling` | number | yes | Upper price bound as Amazon last reported it. Null when unset. Same lifecycle as floor. |
 | `listing.condition` | string | yes | Family of conditionType: new, used, collectible, refurbished or club. Null until Amazon reports it. |
 | `listing.conditionType` | string | yes | Amazon's full condition token, such as used_very_good. Null until the listing item reports it. |
-| `listing.deleted` | boolean | no | Always a boolean, unlike buyable and discoverable, which go missing while statuses is unset. |
+| `listing.deleted` | boolean | yes | Null while statuses is null. Do not read a null as false. |
 | `listing.discoverable` | boolean | yes | Null while statuses is null. Do not read a null as false. |
 | `listing.enabled` | boolean | no |  |
 | `listing.fba` | object | yes | FBA inventory and planning report data, camelCased from Amazon's hyphenated report columns. Null for MFN listings. Keys vary by report, so treat anything below it as optional. |
@@ -212,7 +212,7 @@ Every currency value on context is in major units (15.27). The list_listings too
 | `listing.restockDate` | string | yes | YYYY-MM-DD the listing is back in stock. Null when unset. Writable on listings you fulfil yourself. |
 | `listing.shipping` | number | yes | Zero when Amazon fulfils. On a listing you fulfil, null until an offer event carries your own offer; Pulsify no longer polls for it. |
 | `listing.shippingGroup` | string | yes | Merchant shipping template id, not its display name. Null until Amazon reports one; FBA listings have none. Writable on listings you fulfil yourself. |
-| `listing.statuses` | array | yes | Null until Amazon first reports listing status. Null means unknown, not empty. buyable and discoverable derive from it and are null alongside it. |
+| `listing.statuses` | array | yes | Null until Amazon first reports listing status. Null means unknown, not empty. buyable, discoverable and deleted derive from it and are null alongside it. |
 | `listing.statuses[]` | string | no | One of "BUYABLE", "DISCOVERABLE", "DELETED". |
 | `marketplace` | object | no |  |
 | `marketplace.timeZone` | string | no | IANA zone for the listing's marketplace. Use it for any hour-of-day logic. |
