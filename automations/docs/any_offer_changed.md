@@ -659,7 +659,7 @@ function queueReprice(context, price) {
 
 ## Context
 
-Every currency value on context is in major units (15.27). The list_listings tool reports the same figures in minor units (1527). Never mix them. Some advertising amounts arrive as decimal strings rather than numbers; each says so, and they need parseFloat before arithmetic.
+Projected currency values on context are in major units (15.27). Raw listing.data retains Amazon's units and types. The list_listings tool reports the same figures in minor units (1527). Never mix them. Some advertising amounts arrive as decimal strings rather than numbers; each says so, and they need parseFloat before arithmetic.
 
 | Path | Type | Nullable | Notes |
 | --- | --- | --- | --- |
@@ -703,6 +703,7 @@ Every currency value on context is in major units (15.27). The list_listings too
 | `listing.ceiling` | number | yes | Upper price bound as Amazon last reported it. Null when unset. Same lifecycle as floor. |
 | `listing.condition` | string | yes | Family of conditionType: new, used, collectible, refurbished or club. Null until Amazon reports it. |
 | `listing.conditionType` | string | yes | Amazon's full condition token, such as used_very_good. Null until the listing item reports it. |
+| `listing.data` | object | no | Raw Amazon source snapshots, with original keys and units. Contents vary with the sources received; missing sources are absent. FBA report stock is under data.fba.inventory (afn-fulfillable-quantity, afn-inbound-shipped-quantity, etc.). Submitted MFN stock is under data.listings_item.attributes.fulfillment_availability; observed availability is under data.listings_item.fulfillmentAvailability. data.notifications holds the latest accepted envelope of each type, including EventTime. Notifications do not overwrite report or crawl snapshots. Choose the source and stock measure your automation needs. |
 | `listing.deleted` | boolean | yes | Null while statuses is null. Do not read a null as false. |
 | `listing.discoverable` | boolean | yes | Null while statuses is null. Do not read a null as false. |
 | `listing.enabled` | boolean | no |  |
@@ -758,7 +759,6 @@ Every currency value on context is in major units (15.27). The list_listings too
 | `listing.mutations[].submissionId` | string | no | Amazon's submissionId for the patch that carried this mutation. |
 | `listing.mutations[].submittedAt` | string | no | ISO 8601 timestamp when Amazon's response was recorded. |
 | `listing.price` | number | yes | Major units (15.27). list_listings reports the same figure as 1527. |
-| `listing.quantity` | number | yes | Available quantity. Null when Amazon has not reported one. Writable on listings you fulfil yourself; a write there is rejected on an FBA listing. |
 | `listing.restockDate` | string | yes | YYYY-MM-DD the listing is back in stock. Null when unset. Writable on listings you fulfil yourself. |
 | `listing.shipping` | number | yes | Zero when Amazon fulfils. On a listing you fulfil, null until an offer event carries your own offer; Pulsify no longer polls for it. |
 | `listing.shippingGroup` | string | yes | Merchant shipping template id, not its display name. Null until Amazon reports one; FBA listings have none. Writable on listings you fulfil yourself. |
@@ -766,7 +766,7 @@ Every currency value on context is in major units (15.27). The list_listings too
 | `listing.statuses[]` | string | no | One of "BUYABLE", "DISCOVERABLE", "DELETED". |
 | `marketplace` | object | no |  |
 | `marketplace.timeZone` | string | no | IANA zone for the listing's marketplace. Use it for any hour-of-day logic. |
-| `mutations` | array | no | Mutation outbox array. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. |
+| `mutations` | array | no | Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to change the local enabled switch. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. |
 | `store` | object | no |  |
 | `webhooks` | object | no | One entry per enabled webhook on the account, keyed by name. Call webhooks.<name>.post(payload); a string payload is wrapped as { text: ... }. Empty when the account has none. |
 

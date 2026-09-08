@@ -3,7 +3,6 @@
     {
       "asin": "B00EXAMPLE01",
       "price": 1527,
-      "quantity": 3,
       "enabled": true,
       "time_zone": "America/Los_Angeles",
       "offer": {

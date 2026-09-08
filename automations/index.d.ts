@@ -73,6 +73,8 @@ export interface ListingContext {
     condition: string | null;
     /** Amazon's full condition token, such as used_very_good. Null until the listing item reports it. */
     conditionType: string | null;
+    /** Raw Amazon source snapshots, with original keys and units. Contents vary with the sources received; missing sources are absent. FBA report stock is under data.fba.inventory (afn-fulfillable-quantity, afn-inbound-shipped-quantity, etc.). Submitted MFN stock is under data.listings_item.attributes.fulfillment_availability; observed availability is under data.listings_item.fulfillmentAvailability. data.notifications holds the latest accepted envelope of each type, including EventTime. Notifications do not overwrite report or crawl snapshots. Choose the source and stock measure your automation needs. */
+    data: unknown;
     /** Null while statuses is null. Do not read a null as false. */
     deleted: boolean | null;
     /** Null while statuses is null. Do not read a null as false. */
@@ -159,8 +161,6 @@ export interface ListingContext {
     }>;
     /** Major units (15.27). list_listings reports the same figure as 1527. Major units. */
     price: number | null;
-    /** Available quantity. Null when Amazon has not reported one. Writable on listings you fulfil yourself; a write there is rejected on an FBA listing. */
-    quantity: number | null;
     /** YYYY-MM-DD the listing is back in stock. Null when unset. Writable on listings you fulfil yourself. */
     restockDate: string | null;
     /** Zero when Amazon fulfils. On a listing you fulfil, null until an offer event carries your own offer; Pulsify no longer polls for it. Major units. */
@@ -174,7 +174,7 @@ export interface ListingContext {
     /** IANA zone for the listing's marketplace. Use it for any hour-of-day logic. */
     timeZone: string;
   };
-  /** Mutation outbox array. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
+  /** Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to change the local enabled switch. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
   mutations: Record<string, unknown>[];
   store: {
     /** Removes a key immediately. */
@@ -194,7 +194,7 @@ export interface SellerContext {
     id: string;
     name: string;
   };
-  /** Mutation outbox array. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
+  /** Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to change the local enabled switch. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
   mutations: Record<string, unknown>[];
   selling_partner: {
     id: string;
@@ -256,7 +256,7 @@ export interface CampaignContext {
     hour: string;
     impressions: number;
   }>;
-  /** Mutation outbox array. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
+  /** Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to change the local enabled switch. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
   mutations: Record<string, unknown>[];
   store: {
     /** Removes a key immediately. */
@@ -286,7 +286,7 @@ export interface PortfolioContext {
     /** Percentage of budget consumed, 0-100. Amazon emits one per 5% increment. Null outside budget-usage events. */
     usagePercentage: number;
   };
-  /** Mutation outbox array. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
+  /** Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to change the local enabled switch. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
   mutations: Record<string, unknown>[];
   /** Present instead of context.campaign when a portfolio budget crosses an increment. Check budget.scopeType, or the presence of this object, before reading context.campaign. */
   portfolio: {
@@ -359,7 +359,7 @@ export interface MetricsContext {
     sales: number;
     unitsOrdered: number;
   };
-  /** Mutation outbox array. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
+  /** Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to change the local enabled switch. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
   mutations: Record<string, unknown>[];
   store: {
     /** Removes a key immediately. */
@@ -413,7 +413,7 @@ export interface ChangeContext {
   };
   hourlyConversions: unknown;
   hourlyTraffic: unknown;
-  /** Mutation outbox array. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
+  /** Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to change the local enabled switch. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
   mutations: Record<string, unknown>[];
   store: {
     /** Removes a key immediately. */
