@@ -85,7 +85,7 @@ Projected currency values on context are in major units (15.27). Raw listing.dat
 | `metrics.records` | number | no | How many raw feed rows were rolled up into this summary. |
 | `metrics.sales` | number | no | Attributed sales for the hour. Conversion feeds only. |
 | `metrics.unitsOrdered` | number | no |  |
-| `mutations` | array | no | Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to change the local enabled switch. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. |
+| `mutations` | array | no | Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to block or allow automated changes. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. |
 | `store` | object | no |  |
 | `webhooks` | object | no | One entry per enabled webhook on the account, keyed by name. Call webhooks.<name>.post(payload); a string payload is wrapped as { text: ... }. Empty when the account has none. |
 

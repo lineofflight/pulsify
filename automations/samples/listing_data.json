@@ -3,7 +3,7 @@
     {
       "asin": "B00EXAMPLE01",
       "price": 1527,
-      "enabled": true,
+      "blocked": false,
       "time_zone": "America/Los_Angeles",
       "offer": {
         "featured": true,

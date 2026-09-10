@@ -35,7 +35,7 @@ Every currency value on `context` is in major units (15.27).
 npm install --save-dev @lineofflight/pulsify-automations
 ```
 
-Version 2026.908.0. Types only — there is no runtime to import. The templates are
+Version 2026.910.0. Types only — there is no runtime to import. The templates are
 source you copy into an automation.
 
 ## Streams

@@ -261,6 +261,7 @@ Projected currency values on context are in major units (15.27). Raw listing.dat
 | `listing.asin` | string | no |  |
 | `listing.b2bPrice` | number | yes | Null when the listing has no B2B offer. |
 | `listing.b2bUnitsSold` | number | no | Trailing 30 days, rolled up eagerly. Always a number: zero rather than absent with no B2B sales. |
+| `listing.blocked` | boolean | no |  |
 | `listing.buyable` | boolean | yes | Null while statuses is null. Do not read a null as false. |
 | `listing.campaigns` | array | no |  |
 | `listing.campaigns[].asinCount` | number | no | Distinct ASINs advertised in the campaign, not just this listing's. |
@@ -282,7 +283,6 @@ Projected currency values on context are in major units (15.27). Raw listing.dat
 | `listing.data` | object | no | Raw Amazon source snapshots, with original keys and units. Contents vary with the sources received; missing sources are absent. FBA report stock is under data.fba.inventory (afn-fulfillable-quantity, afn-inbound-shipped-quantity, etc.). Submitted MFN stock is under data.listings_item.attributes.fulfillment_availability; observed availability is under data.listings_item.fulfillmentAvailability. data.notifications holds the latest accepted envelope of each type, including EventTime. Notifications do not overwrite report or crawl snapshots. Choose the source and stock measure your automation needs. |
 | `listing.deleted` | boolean | yes | Null while statuses is null. Do not read a null as false. |
 | `listing.discoverable` | boolean | yes | Null while statuses is null. Do not read a null as false. |
-| `listing.enabled` | boolean | no |  |
 | `listing.fba` | object | yes | FBA inventory and planning report data, camelCased from Amazon's hyphenated report columns. Null for MFN listings. Keys vary by report, so treat anything below it as optional. |
 | `listing.fba.agedInventory` | object | no | Unit counts per age bucket, as decimal strings. |
 | `listing.fba.agedInventory.invAge0To90Days` | string | no |  |
@@ -342,7 +342,7 @@ Projected currency values on context are in major units (15.27). Raw listing.dat
 | `listing.statuses[]` | string | no | One of "BUYABLE", "DISCOVERABLE", "DELETED". |
 | `marketplace` | object | no |  |
 | `marketplace.timeZone` | string | no | IANA zone for the listing's marketplace. Use it for any hour-of-day logic. |
-| `mutations` | array | no | Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to change the local enabled switch. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. |
+| `mutations` | array | no | Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to block or allow automated changes. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. |
 | `store` | object | no |  |
 | `webhooks` | object | no | One entry per enabled webhook on the account, keyed by name. Call webhooks.<name>.post(payload); a string payload is wrapped as { text: ... }. Empty when the account has none. |
 
