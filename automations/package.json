@@ -1,6 +1,6 @@
 {
   "name": "@lineofflight/pulsify-automations",
-  "version": "2026.910.0",
+  "version": "2026.914.0",
   "description": "TypeScript definitions, reference templates, and sample event payloads for Pulsify automations.",
   "license": "MIT",
   "types": "index.d.ts",

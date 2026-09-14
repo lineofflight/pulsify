@@ -21,7 +21,7 @@ function handle(event, context) {
 
   if (!listing.floor || !listing.ceiling) return context;
 
-  // Find my offer and the winning competitor
+  // Find my offer
   const offers = notification?.Offers || [];
   const myOffer = offers.find((o) => o.SellerId === sellerId);
 
@@ -34,11 +34,14 @@ function handle(event, context) {
   }
 
   const shipping = myOffer.Shipping?.Amount ?? listing.shipping;
-  const winningCompetitor = offers.find(
-    (o) => o.SellerId !== sellerId && o.IsBuyBoxWinner,
+  const competitors = offers.filter(
+    (o) =>
+      o.SellerId !== sellerId &&
+      o.IsFulfilledByAmazon === myOffer.IsFulfilledByAmazon,
   );
+  const winningCompetitor = competitors.find((o) => o.IsBuyBoxWinner);
 
-  // Buy box suppressed - no winner exists
+  // Buy box suppressed - no winner exists in our channel
   if (!winningCompetitor && !myOffer.IsBuyBoxWinner) {
     // Explore toward floor to try becoming buy-box eligible
     const myLanded = landedPrice(myOffer);
@@ -50,16 +53,16 @@ function handle(event, context) {
   // Note: Bisection toward floor converges naturally - no state tracking needed.
   // Once we win, IsBuyBoxWinner becomes true and main algorithm takes over.
 
-  // Use winning competitor if we're losing, or nearest featured if we're winning
-  const competitor =
-    winningCompetitor ||
-    offers
-      .filter((o) => o.SellerId !== sellerId && o.IsFeaturedMerchant)
-      .sort(
-        (a, b) =>
-          Math.abs(landedPrice(a) - landedPrice(myOffer)) -
-          Math.abs(landedPrice(b) - landedPrice(myOffer)),
-      )[0];
+  // When winning, learn against the nearest featured non-winner
+  const competitor = myOffer.IsBuyBoxWinner
+    ? competitors
+        .filter((o) => o.IsFeaturedMerchant && !o.IsBuyBoxWinner)
+        .sort(
+          (a, b) =>
+            Math.abs(landedPrice(a) - landedPrice(myOffer)) -
+            Math.abs(landedPrice(b) - landedPrice(myOffer)),
+        )[0]
+    : winningCompetitor;
 
   if (!competitor) return context;
 
@@ -91,7 +94,7 @@ function handle(event, context) {
 
 function learnBoundaries(context, myOffer, competitor, maxLanded) {
   const { asin, condition } = context.listing;
-  const key = boundaryKey(asin, condition, competitor);
+  const key = boundaryKey(asin, condition, myOffer);
   const bounds = context.store.get(key) || { w: null, l: null, ts: null };
 
   // Reset stale boundaries (24h TTL handled by Redis, but also check here)
@@ -162,6 +165,8 @@ function suggestWhenWinning(currentDelta, bounds, maxDelta) {
     // Bisect between current and losing boundary
     delta = (currentDelta + bounds.l) / 2;
   }
+  // Cap exploration and bisection at 1% of our current landed price
+  delta = Math.min(delta, currentDelta + (1 + currentDelta) * 0.01);
   // Don't explore above threshold
   return maxDelta !== null ? Math.min(delta, maxDelta) : delta;
 }
@@ -209,12 +214,13 @@ function exploreLower(delta) {
   }
 }
 
-function boundaryKey(asin, condition, competitor) {
-  return `bounds:${asin}:${condition}:${competitor.SellerId}`;
+function boundaryKey(asin, condition, myOffer) {
+  const channel = myOffer.IsFulfilledByAmazon ? "Amazon" : "Merchant";
+  return `bounds:${asin}:${condition}:${channel}`;
 }
 
 // Note: Key uses condition but not subcondition. The algorithm learns empirically
-// what delta works against each competitor - subcondition advantage is captured
+// what delta works in each channel - subcondition advantage is captured
 // in win/lose outcomes.
 
 function landedPrice(offer) {
