@@ -112,7 +112,7 @@ Projected currency values on context are in major units (15.27). Raw listing.dat
 
 | Path | Type | Nullable | Notes |
 | --- | --- | --- | --- |
-| `mutations` | array | no | Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to block or allow automated changes. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. |
+| `mutations` | array | no | Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. |
 | `selling_partner` | object | no |  |
 | `selling_partner.id` | string | no |  |
 | `selling_partner.marketplace_id` | string | no | snake_case, as above. |

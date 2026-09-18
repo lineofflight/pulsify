@@ -171,10 +171,12 @@ export interface ListingContext {
     statuses: Array<string>;
   };
   marketplace: {
+    /** The listing's marketplace, e.g. "ATVPDKIKX0DER". Matches the MarketplaceId Amazon sends on region-wide events, so use it to pick the entry for this listing rather than reading marketplace id out of raw listing data. */
+    marketplaceId: string;
     /** IANA zone for the listing's marketplace. Use it for any hour-of-day logic. */
     timeZone: string;
   };
-  /** Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to block or allow automated changes. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
+  /** Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. */
   mutations: Record<string, unknown>[];
   store: {
     /** Removes a key immediately. */
@@ -194,7 +196,7 @@ export interface SellerContext {
     id: string;
     name: string;
   };
-  /** Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to block or allow automated changes. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
+  /** Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. */
   mutations: Record<string, unknown>[];
   selling_partner: {
     id: string;
@@ -256,7 +258,7 @@ export interface CampaignContext {
     hour: string;
     impressions: number;
   }>;
-  /** Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to block or allow automated changes. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
+  /** Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. */
   mutations: Record<string, unknown>[];
   store: {
     /** Removes a key immediately. */
@@ -286,7 +288,7 @@ export interface PortfolioContext {
     /** Percentage of budget consumed, 0-100. Amazon emits one per 5% increment. Null outside budget-usage events. */
     usagePercentage: number;
   };
-  /** Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to block or allow automated changes. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
+  /** Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. */
   mutations: Record<string, unknown>[];
   /** Present instead of context.campaign when a portfolio budget crosses an increment. Check budget.scopeType, or the presence of this object, before reading context.campaign. */
   portfolio: {
@@ -359,7 +361,7 @@ export interface MetricsContext {
     sales: number;
     unitsOrdered: number;
   };
-  /** Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to block or allow automated changes. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
+  /** Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. */
   mutations: Record<string, unknown>[];
   store: {
     /** Removes a key immediately. */
@@ -413,7 +415,7 @@ export interface ChangeContext {
   };
   hourlyConversions: unknown;
   hourlyTraffic: unknown;
-  /** Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to block or allow automated changes. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. */
+  /** Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. */
   mutations: Record<string, unknown>[];
   store: {
     /** Removes a key immediately. */

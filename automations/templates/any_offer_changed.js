@@ -1,4 +1,5 @@
 const CONVERGENCE_THRESHOLD = 0.01; // 1% - stop optimizing when boundaries this close
+const PROPAGATION_MS = 40 * 1000; // Amazon can keep reporting our old price this long after accepting a new one
 
 function handle(event, context) {
   const listing = context.listing;
@@ -15,71 +16,77 @@ function handle(event, context) {
   // Can't act without our own offer in the notification
   if (!myOffer) return context;
 
+  // Amazon still reports the price our last accepted write replaced: wait for it rather than react to it
+  const propagating = propagatingPrice(listing);
+  if (propagating !== null && propagating !== myOffer.ListingPrice?.Amount) {
+    return context;
+  }
+
   // Only learn when we're featured (Buy Box eligible)
   if (!myOffer.IsFeaturedMerchant) {
     return context;
   }
 
   const shipping = myOffer.Shipping?.Amount ?? listing.shipping;
-  const competitors = offers.filter(
-    (o) =>
-      o.SellerId !== sellerId &&
-      o.IsFulfilledByAmazon === myOffer.IsFulfilledByAmazon,
-  );
-  const winningCompetitor = competitors.find((o) => o.IsBuyBoxWinner);
+  const myLanded = landedPrice(myOffer);
+  const winning = Boolean(myOffer.IsBuyBoxWinner);
+  const buyBox = buyBoxPrice(summary, listing.condition);
 
-  // Buy box suppressed - no winner exists in our channel
-  if (!winningCompetitor && !myOffer.IsBuyBoxWinner) {
+  // Buy box suppressed - no winner exists
+  if (!winning && !buyBox) {
     // Explore toward floor to try becoming buy-box eligible
-    const myLanded = landedPrice(myOffer);
     const midpoint = (listing.floor + (myLanded - shipping)) / 2;
-    queueReprice(context, round(midpoint));
+    queueReprice(context, round(midpoint), myOffer);
     return context;
   }
 
-  // Note: Bisection toward floor converges naturally - no state tracking needed.
-  // Once we win, IsBuyBoxWinner becomes true and main algorithm takes over.
+  // Every featured offer competes for the same Buy Box, whatever its fulfillment channel.
+  // When winning, learn against the nearest one. When losing, against the Buy Box price.
+  const buyBoxLanded = buyBox && landedPrice(buyBox);
+  let compLanded = buyBoxLanded;
+  if (winning) {
+    const nearest = offers
+      .filter((o) => o.SellerId !== sellerId && o.IsFeaturedMerchant)
+      .map(landedPrice)
+      .sort((a, b) => Math.abs(a - myLanded) - Math.abs(b - myLanded))[0];
 
-  // When winning, learn against the nearest featured non-winner
-  const competitor = myOffer.IsBuyBoxWinner
-    ? competitors
-        .filter((o) => o.IsFeaturedMerchant && !o.IsBuyBoxWinner)
-        .sort(
-          (a, b) =>
-            Math.abs(landedPrice(a) - landedPrice(myOffer)) -
-            Math.abs(landedPrice(b) - landedPrice(myOffer)),
-        )[0]
-    : winningCompetitor;
-
-  if (!competitor) return context;
-
-  // Note: When winning with no competitor, we stay put. Jumping to ceiling would
-  // cause ping-pong with suppression path. Not worth the complexity to track.
+    // Note: When winning with no competitor, we stay put. Jumping to ceiling would
+    // cause ping-pong with suppression path. Not worth the complexity to track.
+    if (nearest === undefined) return context;
+    compLanded = nearest;
+  }
 
   // Cap ceiling with competitive threshold if available
   const threshold = summary?.CompetitivePriceThreshold?.Amount;
   const ceiling = threshold
     ? Math.min(listing.ceiling, threshold)
     : listing.ceiling;
-  const maxLanded = ceiling + shipping;
+  // Pricing above a Buy Box another seller holds can't win it back
+  const maxLanded = winning
+    ? ceiling + shipping
+    : Math.min(ceiling + shipping, buyBoxLanded);
 
-  // Learn and suggest price
-  const suggestedLanded = learnBoundaries(
+  // Learn and suggest price. Each move goes straight to its target; once bounds converge, the price Amazon
+  // echoes back is the one we'd send, so nothing is sent.
+  const delta = learnBoundaries(
     context,
     myOffer,
-    competitor,
-    maxLanded,
+    myLanded,
+    compLanded,
+    winning,
   );
-
-  if (suggestedLanded !== null) {
-    const price = clamp(suggestedLanded - shipping, listing.floor, ceiling);
-    queueReprice(context, round(price));
-  }
+  const price = clamp(
+    compLanded * (1 + delta) - shipping,
+    listing.floor,
+    maxLanded - shipping,
+  );
+  queueReprice(context, round(price), myOffer);
 
   return context;
 }
 
-function learnBoundaries(context, myOffer, competitor, maxLanded) {
+// Returns the delta to price at, relative to the competitor. Our current delta holds the price.
+function learnBoundaries(context, myOffer, myLanded, compLanded, winning) {
   const { asin, condition } = context.listing;
   const key = boundaryKey(asin, condition, myOffer);
   const bounds = context.store.get(key) || { w: null, l: null, ts: null };
@@ -91,21 +98,13 @@ function learnBoundaries(context, myOffer, competitor, maxLanded) {
     bounds.l = null;
   }
 
-  const myLanded = landedPrice(myOffer);
-  const compLanded = landedPrice(competitor);
-
   // Percentage delta: negative means we're cheaper
   const delta = (myLanded - compLanded) / compLanded;
-  const winning = myOffer.IsBuyBoxWinner;
 
-  // Update boundaries
+  // Update boundaries. A win above the losing boundary keeps it: that loss is our only evidence of where headroom ends.
   if (winning) {
     if (bounds.w === null || delta > bounds.w) {
       bounds.w = delta;
-    }
-    // Invalidate losing boundary if we won at a higher delta
-    if (bounds.l !== null && delta >= bounds.l) {
-      bounds.l = null;
     }
   } else {
     if (bounds.l === null || delta < bounds.l) {
@@ -120,42 +119,17 @@ function learnBoundaries(context, myOffer, competitor, maxLanded) {
   bounds.ts = now;
   context.store.set(key, bounds);
 
-  // Anti-jitter: stop optimizing when boundaries converged
-  if (bounds.w !== null && bounds.l !== null) {
-    const gap = bounds.l - bounds.w;
-    if (gap < CONVERGENCE_THRESHOLD && winning) {
-      // Boundaries converged and we're winning - stay put
-      return null;
-    }
-  }
-
-  // Calculate max delta from threshold
-  const maxDelta = (maxLanded - compLanded) / compLanded;
-
-  // Suggest next price
-  let suggestedDelta;
-  if (winning) {
-    suggestedDelta = suggestWhenWinning(delta, bounds, maxDelta);
-  } else {
-    suggestedDelta = suggestWhenLosing(delta, bounds);
-  }
-
-  return round(compLanded * (1 + suggestedDelta));
+  if (winning) return suggestWhenWinning(delta, bounds);
+  return suggestWhenLosing(delta, bounds);
 }
 
-function suggestWhenWinning(currentDelta, bounds, maxDelta) {
-  let delta;
-  if (bounds.l === null) {
-    // No losing boundary - explore upward
-    delta = exploreHigher(currentDelta);
-  } else {
-    // Bisect between current and losing boundary
-    delta = (currentDelta + bounds.l) / 2;
-  }
-  // Cap exploration and bisection at 1% of our current landed price
-  delta = Math.min(delta, currentDelta + (1 + currentDelta) * 0.01);
-  // Don't explore above threshold
-  return maxDelta !== null ? Math.min(delta, maxDelta) : delta;
+function suggestWhenWinning(currentDelta, bounds) {
+  // No losing boundary - explore upward until a loss sets one
+  if (bounds.l === null) return exploreHigher(currentDelta);
+  // Anti-jitter: boundaries converged (or a win came above the loss) - stay put
+  if (bounds.l - bounds.w < CONVERGENCE_THRESHOLD) return currentDelta;
+  // Bisect between current and losing boundary
+  return (currentDelta + bounds.l) / 2;
 }
 
 function suggestWhenLosing(currentDelta, bounds) {
@@ -210,6 +184,17 @@ function boundaryKey(asin, condition, myOffer) {
 // what delta works in each channel - subcondition advantage is captured
 // in win/lose outcomes.
 
+// The Buy Box for our condition, or null when Amazon reports none. Amazon capitalizes the condition ("New").
+function buyBoxPrice(summary, condition) {
+  const prices = summary?.BuyBoxPrices || [];
+  return (
+    prices.find(
+      (p) => p.Condition?.toLowerCase() === condition?.toLowerCase(),
+    ) || null
+  );
+}
+
+// Listing price plus shipping, the same sum for an offer and the Buy Box
 function landedPrice(offer) {
   return (offer.ListingPrice?.Amount || 0) + (offer.Shipping?.Amount || 0);
 }
@@ -222,7 +207,13 @@ function round(value) {
   return Math.round(value * 100) / 100;
 }
 
-function queueReprice(context, price) {
+function queueReprice(context, price, myOffer) {
+  // Amazon already shows this price, or a queued request already asks for it
+  const queued = context.listing.mutations
+    .filter((m) => m.status === "queued")
+    .map(requestedPrice);
+  if (price === myOffer.ListingPrice?.Amount || queued.includes(price)) return;
+
   context.mutations.push({
     target: context.listing,
     patches: [
@@ -237,4 +228,20 @@ function queueReprice(context, price) {
       },
     ],
   });
+}
+
+// The price of our latest submitted request while Amazon may still report the one before it:
+// accepted under PROPAGATION_MS ago. Null otherwise.
+function propagatingPrice(listing) {
+  const latest = listing.mutations.find((m) => m.status === "submitted");
+  if (!latest?.accepted) return null;
+  const age = Date.now() - Date.parse(latest.submittedAt);
+  return age < PROPAGATION_MS ? requestedPrice(latest) : null;
+}
+
+// The B2C price a request set, or null when it set none
+function requestedPrice(mutation) {
+  const offer = mutation.payload?.patches?.[0]?.value?.[0];
+  if (!offer || (offer.audience ?? "ALL") !== "ALL") return null;
+  return offer.our_price?.[0]?.schedule?.[0]?.value_with_tax ?? null;
 }

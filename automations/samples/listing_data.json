@@ -5,6 +5,7 @@
       "price": 1527,
       "blocked": false,
       "time_zone": "America/Los_Angeles",
+      "marketplace_id": "ATVPDKIKX0DER",
       "offer": {
         "featured": true,
         "buy_box_winner": false,
@@ -28,8 +29,12 @@
           "purchasable_offer": [
             {
               "currency": "USD",
-              "minimum_seller_allowed_price": [{ "schedule": [{ "value_with_tax": "10.00" }] }],
-              "maximum_seller_allowed_price": [{ "schedule": [{ "value_with_tax": "25.00" }] }]
+              "minimum_seller_allowed_price": [
+                { "schedule": [{ "value_with_tax": "10.00" }] }
+              ],
+              "maximum_seller_allowed_price": [
+                { "schedule": [{ "value_with_tax": "25.00" }] }
+              ]
             }
           ],
           "fc_shelf_life": [{ "value": 540, "unit": "days" }]

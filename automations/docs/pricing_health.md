@@ -11,6 +11,8 @@ Your offer loses Buy Box eligibility due to uncompetitive pricing.
 Restores Buy Box eligibility by setting competitive prices when Amazon flags uncompetitive pricing.
 
 ```js
+const PROPAGATION_MS = 40 * 1000; // Amazon can keep reporting our old price this long after accepting a new one
+
 function handle(event, context) {
   const listing = context.listing;
   // PRICING_HEALTH payloads are camelCase and nest the summary under `payload`
@@ -38,6 +40,14 @@ function handle(event, context) {
     Math.min(targetPrice, listing.ceiling),
   );
 
+  // Amazon already shows this price, or a request for it has not landed yet
+  if (
+    finalPrice === listing.price ||
+    pendingPrices(listing).includes(finalPrice)
+  ) {
+    return context;
+  }
+
   // Update the listing
   queueReprice(context, finalPrice);
 
@@ -59,6 +69,19 @@ function queueReprice(context, price) {
       },
     ],
   });
+}
+
+// B2C prices our requests set that Amazon may not show yet: queued, or accepted under PROPAGATION_MS ago
+function pendingPrices(listing) {
+  return listing.mutations
+    .filter(
+      (m) =>
+        m.status === "queued" ||
+        (m.accepted && Date.now() - Date.parse(m.submittedAt) < PROPAGATION_MS),
+    )
+    .map((m) => m.payload?.patches?.[0]?.value?.[0])
+    .filter((offer) => offer && (offer.audience ?? "ALL") === "ALL")
+    .map((offer) => offer.our_price?.[0]?.schedule?.[0]?.value_with_tax);
 }
 ```
 
@@ -341,8 +364,9 @@ Projected currency values on context are in major units (15.27). Raw listing.dat
 | `listing.statuses` | array | yes | Null until Amazon first reports listing status. Null means unknown, not empty. buyable, discoverable and deleted derive from it and are null alongside it. |
 | `listing.statuses[]` | string | no | One of "BUYABLE", "DISCOVERABLE", "DELETED". |
 | `marketplace` | object | no |  |
+| `marketplace.marketplaceId` | string | no | The listing's marketplace, e.g. "ATVPDKIKX0DER". Matches the MarketplaceId Amazon sends on region-wide events, so use it to pick the entry for this listing rather than reading marketplace id out of raw listing data. |
 | `marketplace.timeZone` | string | no | IANA zone for the listing's marketplace. Use it for any hour-of-day logic. |
-| `mutations` | array | no | Mutation outbox array. Listing writes require a non-empty patches array of native Amazon operations. Flat fields such as price, floor and quantity are not accepted; use update_listing to block or allow automated changes. Push mutation objects here to queue changes for Amazon selling partner or ads entities. Drained by the runtime after handle returns. |
+| `mutations` | array | no | Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. |
 | `store` | object | no |  |
 | `webhooks` | object | no | One entry per enabled webhook on the account, keyed by name. Call webhooks.<name>.post(payload); a string payload is wrapped as { text: ... }. Empty when the account has none. |
 

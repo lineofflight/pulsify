@@ -1,3 +1,5 @@
+const PROPAGATION_MS = 40 * 1000; // Amazon can keep reporting our old price this long after accepting a new one
+
 function handle(event, context) {
   const listing = context.listing;
   // PRICING_HEALTH payloads are camelCase and nest the summary under `payload`
@@ -25,6 +27,14 @@ function handle(event, context) {
     Math.min(targetPrice, listing.ceiling),
   );
 
+  // Amazon already shows this price, or a request for it has not landed yet
+  if (
+    finalPrice === listing.price ||
+    pendingPrices(listing).includes(finalPrice)
+  ) {
+    return context;
+  }
+
   // Update the listing
   queueReprice(context, finalPrice);
 
@@ -46,4 +56,17 @@ function queueReprice(context, price) {
       },
     ],
   });
+}
+
+// B2C prices our requests set that Amazon may not show yet: queued, or accepted under PROPAGATION_MS ago
+function pendingPrices(listing) {
+  return listing.mutations
+    .filter(
+      (m) =>
+        m.status === "queued" ||
+        (m.accepted && Date.now() - Date.parse(m.submittedAt) < PROPAGATION_MS),
+    )
+    .map((m) => m.payload?.patches?.[0]?.value?.[0])
+    .filter((offer) => offer && (offer.audience ?? "ALL") === "ALL")
+    .map((offer) => offer.our_price?.[0]?.schedule?.[0]?.value_with_tax);
 }
