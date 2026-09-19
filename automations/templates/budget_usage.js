@@ -17,7 +17,8 @@ function handle(event, context) {
   if (campaign && usage >= 90 && campaign.state === "enabled") {
     context.mutations.push({
       target: campaign,
-      action: "pause",
+      action: "update",
+      payload: { state: "PAUSED" },
     });
   }
 

@@ -4,6 +4,41 @@
 // from the sandbox that runs your code, so they describe what `handle` actually
 // receives.
 
+export type AdsTargetType = "Campaign" | "AdGroup" | "Ad" | "Target";
+export interface MutationTarget<T extends "Listing" | AdsTargetType> { type: T; id: string }
+/** Native Sponsored Products update object. Discover fields with get_mutation_schema. */
+export type NativeAdsPayload = Record<string, unknown>;
+export interface ListingPatch {
+  op: "add" | "replace" | "delete" | "merge";
+  path: string;
+  value?: unknown[];
+}
+export type MutationRequest =
+  | {
+      target: MutationTarget<"Listing">;
+      action: "update";
+      payload: { productType: string; patches: ListingPatch[] };
+    }
+  | { target: MutationTarget<AdsTargetType>; action: "update"; payload: NativeAdsPayload }
+  | { target: MutationTarget<AdsTargetType>; action: "archive"; payload: Record<string, never> };
+
+export interface MutationSummary {
+  id: string;
+  targetType: "Listing" | AdsTargetType;
+  targetId: string;
+  action: "update" | "archive";
+  status: "queued" | "submitting" | "submitted" | "blocked" | "uncertain";
+  outcome: string | null;
+  accepted: boolean | null;
+  payload: Record<string, unknown>;
+  response: Record<string, unknown>;
+  httpStatus: number | null;
+  errorMessage: string | null;
+  createdAt: string;
+  submittedAt: string | null;
+  submissionId: string | null;
+}
+
 export interface ListingContext {
   /** Which connected account the automation runs for. Absent on validation runs and plain samples; present on live runs and dry runs. */
   account: {
@@ -12,11 +47,19 @@ export interface ListingContext {
   };
   listing: {
     adGroups: Array<{
+      adGroupId: number | null;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string | null;
       /** Distinct ASINs advertised in the ad group. */
       asinCount: number;
+      campaignLocalId: string | null;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string | null;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
       /** Decimal string rather than a number ("0.75"). parseFloat before comparing. Major units. */
       defaultBid: string | null;
-      id: string | null;
+      id: string;
       metrics30: {
         /** cost / sales over the trailing 30 days. Null when sales is zero. */
         acos: number | null;
@@ -29,14 +72,34 @@ export interface ListingContext {
         /** Attributed sales over the trailing 30 days. Major units. */
         sales: number;
       };
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
       name: string | null;
+      /** Amazon's advertising profile id. */
+      profileId: number | null;
       state: string | null;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "AdGroup";
     }>;
     ads: Array<{
+      adGroupLocalId: string | null;
+      adId: number | null;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string | null;
       asin: string | null;
-      id: string | null;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string | null;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number | null;
       sku: string | null;
       state: string | null;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Ad";
     }>;
     asin: string;
     /** Null when the listing has no B2B offer. Major units. */
@@ -47,11 +110,19 @@ export interface ListingContext {
     /** Null while statuses is null. Do not read a null as false. */
     buyable: boolean | null;
     campaigns: Array<{
+      adProduct: string | null;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string | null;
       /** Distinct ASINs advertised in the campaign, not just this listing's. */
       asinCount: number;
       /** Daily budget in major units, and a decimal string rather than a number ("50.0"). parseFloat before comparing. Major units. */
       budget: string | null;
-      id: string | null;
+      campaignId: number | null;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string | null;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
       metrics30: {
         /** cost / sales over the trailing 30 days. Null when sales is zero. */
         acos: number | null;
@@ -64,9 +135,15 @@ export interface ListingContext {
         /** Attributed sales over the trailing 30 days. Major units. */
         sales: number;
       };
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
       name: string | null;
+      /** Amazon's advertising profile id. */
+      profileId: number | null;
       state: string | null;
       targetingType: string | null;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Campaign";
     }>;
     /** Upper price bound as Amazon last reported it. Null when unset. Same lifecycle as floor. Major units. */
     ceiling: number | null;
@@ -74,8 +151,10 @@ export interface ListingContext {
     condition: string | null;
     /** Amazon's full condition token, such as used_very_good. Null until the listing item reports it. */
     conditionType: string | null;
+    /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+    currencyCode: string;
     /** Raw Amazon source snapshots, with original keys and units. Contents vary with the sources received; missing sources are absent. FBA report stock is under data.fba.inventory (afn-fulfillable-quantity, afn-inbound-shipped-quantity, etc.). Submitted MFN stock is under data.listings_item.attributes.fulfillment_availability; observed availability is under data.listings_item.fulfillmentAvailability. data.notifications holds the latest accepted envelope of each type, including EventTime. Notifications do not overwrite report or crawl snapshots. Choose the source and stock measure your automation needs. */
-    data: unknown;
+    data: Record<string, unknown>;
     /** Null while statuses is null. Do not read a null as false. */
     deleted: boolean | null;
     /** Null while statuses is null. Do not read a null as false. */
@@ -124,9 +203,16 @@ export interface ListingContext {
     handlingTime: number | null;
     id: string;
     keywords: Array<{
+      adGroupLocalId: string | null;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string | null;
       /** Decimal string rather than a number ("0.85"). parseFloat before comparing. Major units. */
       bid: string | null;
-      id: string | null;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string | null;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
       matchType: string | null;
       metrics30: {
         /** cost / sales over the trailing 30 days. Null when sales is zero. */
@@ -140,27 +226,25 @@ export interface ListingContext {
         /** Attributed sales over the trailing 30 days. Major units. */
         sales: number;
       };
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number | null;
       state: string | null;
+      targetId: number | null;
+      /** Amazon targeting category: keyword, auto, product or product_category. */
+      targetType: string;
       /** The keyword expression. Named text here and expression in the Ads API. */
       text: string | null;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Target";
     }>;
-    /** Recent mutations for the listing: all queued requests and the latest submission. Use status === "queued" to check for in-flight changes. */
-    mutations: Array<{
-      /** Whether Amazon accepted the request for processing; false when rejected. */
-      accepted: boolean;
-      createdAt: string;
-      id: string;
-      payload: unknown;
-      response: unknown;
-      /** "queued" (awaiting submission) or "submitted" (Amazon response recorded). */
-      status: string;
-      /** Amazon's submissionId for the patch that carried this mutation. */
-      submissionId: string;
-      /** ISO 8601 timestamp when Amazon's response was recorded. */
-      submittedAt: string;
-    }>;
+    /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+    mutations: MutationSummary[];
     /** Major units (15.27). list_listings reports the same figure as 1527. Major units. */
     price: number | null;
+    /** Amazon product type for native listing patches. Use PRODUCT when absent. */
+    productType: string | null;
     /** YYYY-MM-DD the listing is back in stock. Null when unset. Writable on listings you fulfil yourself. */
     restockDate: string | null;
     /** Zero when Amazon fulfils. On a listing you fulfil, null until an offer event carries your own offer; Pulsify no longer polls for it. Major units. */
@@ -169,6 +253,46 @@ export interface ListingContext {
     shippingGroup: string | null;
     /** One of "BUYABLE", "DISCOVERABLE", "DELETED". */
     statuses: Array<string>;
+    /** All targeting categories, including keywords, automatic and product targets. */
+    targets: Array<{
+      adGroupLocalId: string | null;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string | null;
+      /** Decimal string rather than a number ("0.85"). parseFloat before comparing. Major units. */
+      bid: string | null;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string | null;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      matchType: string | null;
+      metrics30: {
+        /** cost / sales over the trailing 30 days. Null when sales is zero. */
+        acos: number | null;
+        clicks: number;
+        /** Spend over the trailing 30 days. Major units. */
+        cost: number;
+        impressions: number;
+        /** sales / cost over the trailing 30 days. Null when cost is zero. */
+        roas: number | null;
+        /** Attributed sales over the trailing 30 days. Major units. */
+        sales: number;
+      };
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number | null;
+      state: string | null;
+      targetId: number | null;
+      /** Amazon targeting category: keyword, auto, product or product_category. */
+      targetType: string;
+      /** The keyword expression. Named text here and expression in the Ads API. */
+      text: string | null;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Target";
+    }>;
+    /** Explicit mutation target type. Use this object as the mutation target. */
+    type: "Listing";
   };
   marketplace: {
     /** The listing's marketplace, e.g. "ATVPDKIKX0DER". Matches the MarketplaceId Amazon sends on region-wide events, so use it to pick the entry for this listing rather than reading marketplace id out of raw listing data. */
@@ -176,8 +300,8 @@ export interface ListingContext {
     /** IANA zone for the listing's marketplace. Use it for any hour-of-day logic. */
     timeZone: string;
   };
-  /** Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. */
-  mutations: Record<string, unknown>[];
+  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
+  mutations: MutationRequest[];
   store: {
     /** Removes a key immediately. */
     delete(key: string): void;
@@ -196,8 +320,8 @@ export interface SellerContext {
     id: string;
     name: string;
   };
-  /** Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. */
-  mutations: Record<string, unknown>[];
+  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
+  mutations: MutationRequest[];
   selling_partner: {
     id: string;
     /** snake_case, as above. */
@@ -234,15 +358,171 @@ export interface CampaignContext {
     usagePercentage: number;
   };
   campaign: {
+    adGroups: Array<{
+      adGroupId: number;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      /** Distinct ASINs advertised in the ad group. */
+      asinCount: number;
+      campaignLocalId: string;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      /** Decimal string rather than a number ("0.75"). parseFloat before comparing. Major units. */
+      defaultBid: string;
+      id: string;
+      metrics30: {
+        /** cost / sales over the trailing 30 days. Null when sales is zero. */
+        acos: number;
+        clicks: number;
+        /** Spend over the trailing 30 days. Major units. */
+        cost: number;
+        impressions: number;
+        /** sales / cost over the trailing 30 days. Null when cost is zero. */
+        roas: number;
+        /** Attributed sales over the trailing 30 days. Major units. */
+        sales: number;
+      };
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      name: string;
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      state: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "AdGroup";
+    }>;
     adProduct: string;
+    ads: Array<{
+      adGroupLocalId: string;
+      adId: number;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      asin: string;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      sku: string;
+      state: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Ad";
+    }>;
+    /** Pulsify's local advertising profile id. */
+    advertisingProfileId: string;
+    /** Distinct ASINs advertised in the campaign, not just this listing's. */
+    asinCount: number;
     /** Daily budget in major units. A number on budget-usage events and a decimal string on entity-change events. parseFloat handles both. Major units. */
-    budget: number;
+    budget: string;
     campaignId: number;
+    /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+    currencyCode: string;
+    /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+    data: Record<string, unknown>;
     /** Pulsify's own id. Null when the changed campaign has not been synced yet. */
     id: string;
+    keywords: Array<{
+      adGroupLocalId: string;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      /** Decimal string rather than a number ("0.85"). parseFloat before comparing. Major units. */
+      bid: string;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      matchType: string;
+      metrics30: {
+        /** cost / sales over the trailing 30 days. Null when sales is zero. */
+        acos: number;
+        clicks: number;
+        /** Spend over the trailing 30 days. Major units. */
+        cost: number;
+        impressions: number;
+        /** sales / cost over the trailing 30 days. Null when cost is zero. */
+        roas: number;
+        /** Attributed sales over the trailing 30 days. Major units. */
+        sales: number;
+      };
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      state: string;
+      targetId: number;
+      /** Amazon targeting category: keyword, auto, product or product_category. */
+      targetType: string;
+      /** The keyword expression. Named text here and expression in the Ads API. */
+      text: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Target";
+    }>;
+    metrics30: {
+      /** cost / sales over the trailing 30 days. Null when sales is zero. */
+      acos: number;
+      clicks: number;
+      /** Spend over the trailing 30 days. Major units. */
+      cost: number;
+      impressions: number;
+      /** sales / cost over the trailing 30 days. Null when cost is zero. */
+      roas: number;
+      /** Attributed sales over the trailing 30 days. Major units. */
+      sales: number;
+    };
+    /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+    mutations: MutationSummary[];
     name: string;
+    /** Amazon's advertising profile id. */
+    profileId: number;
     state: string;
     targetingType: string;
+    /** All targeting categories, including keywords, automatic and product targets. */
+    targets: Array<{
+      adGroupLocalId: string;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      /** Decimal string rather than a number ("0.85"). parseFloat before comparing. Major units. */
+      bid: string;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      matchType: string;
+      metrics30: {
+        /** cost / sales over the trailing 30 days. Null when sales is zero. */
+        acos: number;
+        clicks: number;
+        /** Spend over the trailing 30 days. Major units. */
+        cost: number;
+        impressions: number;
+        /** sales / cost over the trailing 30 days. Null when cost is zero. */
+        roas: number;
+        /** Attributed sales over the trailing 30 days. Major units. */
+        sales: number;
+      };
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      state: string;
+      targetId: number;
+      /** Amazon targeting category: keyword, auto, product or product_category. */
+      targetType: string;
+      /** The keyword expression. Named text here and expression in the Ads API. */
+      text: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Target";
+    }>;
+    /** Explicit mutation target type. Use this object as the mutation target. */
+    type: "Campaign";
   };
   hourlyConversions: Array<{
     conversions: number;
@@ -258,8 +538,8 @@ export interface CampaignContext {
     hour: string;
     impressions: number;
   }>;
-  /** Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. */
-  mutations: Record<string, unknown>[];
+  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
+  mutations: MutationRequest[];
   store: {
     /** Removes a key immediately. */
     delete(key: string): void;
@@ -288,8 +568,8 @@ export interface PortfolioContext {
     /** Percentage of budget consumed, 0-100. Amazon emits one per 5% increment. Null outside budget-usage events. */
     usagePercentage: number;
   };
-  /** Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. */
-  mutations: Record<string, unknown>[];
+  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
+  mutations: MutationRequest[];
   /** Present instead of context.campaign when a portfolio budget crosses an increment. Check budget.scopeType, or the presence of this object, before reading context.campaign. */
   portfolio: {
     /** The portfolio's own budget cap, not the figure from the firing event. That one is budget.amount. Null when the portfolio has no cap set. Major units. */
@@ -336,15 +616,171 @@ export interface MetricsContext {
     usagePercentage: number | null;
   };
   campaign: {
+    adGroups: Array<{
+      adGroupId: number;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      /** Distinct ASINs advertised in the ad group. */
+      asinCount: number;
+      campaignLocalId: string;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      /** Decimal string rather than a number ("0.75"). parseFloat before comparing. Major units. */
+      defaultBid: string;
+      id: string;
+      metrics30: {
+        /** cost / sales over the trailing 30 days. Null when sales is zero. */
+        acos: number;
+        clicks: number;
+        /** Spend over the trailing 30 days. Major units. */
+        cost: number;
+        impressions: number;
+        /** sales / cost over the trailing 30 days. Null when cost is zero. */
+        roas: number;
+        /** Attributed sales over the trailing 30 days. Major units. */
+        sales: number;
+      };
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      name: string;
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      state: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "AdGroup";
+    }>;
     adProduct: string;
+    ads: Array<{
+      adGroupLocalId: string;
+      adId: number;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      asin: string;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      sku: string;
+      state: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Ad";
+    }>;
+    /** Pulsify's local advertising profile id. */
+    advertisingProfileId: string;
+    /** Distinct ASINs advertised in the campaign, not just this listing's. */
+    asinCount: number;
     /** Daily budget in major units. A number on budget-usage events and a decimal string on entity-change events. parseFloat handles both. Major units. */
     budget: string;
     campaignId: number;
+    /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+    currencyCode: string;
+    /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+    data: Record<string, unknown>;
     /** Pulsify's own id. Null when the changed campaign has not been synced yet. */
-    id: string | null;
+    id: string;
+    keywords: Array<{
+      adGroupLocalId: string;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      /** Decimal string rather than a number ("0.85"). parseFloat before comparing. Major units. */
+      bid: string;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      matchType: string;
+      metrics30: {
+        /** cost / sales over the trailing 30 days. Null when sales is zero. */
+        acos: number;
+        clicks: number;
+        /** Spend over the trailing 30 days. Major units. */
+        cost: number;
+        impressions: number;
+        /** sales / cost over the trailing 30 days. Null when cost is zero. */
+        roas: number;
+        /** Attributed sales over the trailing 30 days. Major units. */
+        sales: number;
+      };
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      state: string;
+      targetId: number;
+      /** Amazon targeting category: keyword, auto, product or product_category. */
+      targetType: string;
+      /** The keyword expression. Named text here and expression in the Ads API. */
+      text: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Target";
+    }>;
+    metrics30: {
+      /** cost / sales over the trailing 30 days. Null when sales is zero. */
+      acos: number;
+      clicks: number;
+      /** Spend over the trailing 30 days. Major units. */
+      cost: number;
+      impressions: number;
+      /** sales / cost over the trailing 30 days. Null when cost is zero. */
+      roas: number;
+      /** Attributed sales over the trailing 30 days. Major units. */
+      sales: number;
+    };
+    /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+    mutations: MutationSummary[];
     name: string;
+    /** Amazon's advertising profile id. */
+    profileId: number;
     state: string;
     targetingType: string;
+    /** All targeting categories, including keywords, automatic and product targets. */
+    targets: Array<{
+      adGroupLocalId: string;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      /** Decimal string rather than a number ("0.85"). parseFloat before comparing. Major units. */
+      bid: string;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      matchType: string;
+      metrics30: {
+        /** cost / sales over the trailing 30 days. Null when sales is zero. */
+        acos: number;
+        clicks: number;
+        /** Spend over the trailing 30 days. Major units. */
+        cost: number;
+        impressions: number;
+        /** sales / cost over the trailing 30 days. Null when cost is zero. */
+        roas: number;
+        /** Attributed sales over the trailing 30 days. Major units. */
+        sales: number;
+      };
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      state: string;
+      targetId: number;
+      /** Amazon targeting category: keyword, auto, product or product_category. */
+      targetType: string;
+      /** The keyword expression. Named text here and expression in the Ads API. */
+      text: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Target";
+    }>;
+    /** Explicit mutation target type. Use this object as the mutation target. */
+    type: "Campaign";
   };
   hourlyConversions: unknown;
   hourlyTraffic: unknown;
@@ -361,8 +797,8 @@ export interface MetricsContext {
     sales: number;
     unitsOrdered: number;
   };
-  /** Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. */
-  mutations: Record<string, unknown>[];
+  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
+  mutations: MutationRequest[];
   store: {
     /** Removes a key immediately. */
     delete(key: string): void;
@@ -392,15 +828,171 @@ export interface ChangeContext {
     usagePercentage: number | null;
   };
   campaign: {
+    adGroups: Array<{
+      adGroupId: number;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      /** Distinct ASINs advertised in the ad group. */
+      asinCount: number;
+      campaignLocalId: string;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      /** Decimal string rather than a number ("0.75"). parseFloat before comparing. Major units. */
+      defaultBid: string;
+      id: string;
+      metrics30: {
+        /** cost / sales over the trailing 30 days. Null when sales is zero. */
+        acos: number;
+        clicks: number;
+        /** Spend over the trailing 30 days. Major units. */
+        cost: number;
+        impressions: number;
+        /** sales / cost over the trailing 30 days. Null when cost is zero. */
+        roas: number;
+        /** Attributed sales over the trailing 30 days. Major units. */
+        sales: number;
+      };
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      name: string;
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      state: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "AdGroup";
+    }>;
     adProduct: string;
+    ads: Array<{
+      adGroupLocalId: string;
+      adId: number;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      asin: string;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      sku: string;
+      state: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Ad";
+    }>;
+    /** Pulsify's local advertising profile id. */
+    advertisingProfileId: string;
+    /** Distinct ASINs advertised in the campaign, not just this listing's. */
+    asinCount: number;
     /** Daily budget in major units. A number on budget-usage events and a decimal string on entity-change events. parseFloat handles both. Major units. */
     budget: string;
     campaignId: number;
+    /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+    currencyCode: string;
+    /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+    data: Record<string, unknown>;
     /** Pulsify's own id. Null when the changed campaign has not been synced yet. */
-    id: string | null;
+    id: string;
+    keywords: Array<{
+      adGroupLocalId: string;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      /** Decimal string rather than a number ("0.85"). parseFloat before comparing. Major units. */
+      bid: string;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      matchType: string;
+      metrics30: {
+        /** cost / sales over the trailing 30 days. Null when sales is zero. */
+        acos: number;
+        clicks: number;
+        /** Spend over the trailing 30 days. Major units. */
+        cost: number;
+        impressions: number;
+        /** sales / cost over the trailing 30 days. Null when cost is zero. */
+        roas: number;
+        /** Attributed sales over the trailing 30 days. Major units. */
+        sales: number;
+      };
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      state: string;
+      targetId: number;
+      /** Amazon targeting category: keyword, auto, product or product_category. */
+      targetType: string;
+      /** The keyword expression. Named text here and expression in the Ads API. */
+      text: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Target";
+    }>;
+    metrics30: {
+      /** cost / sales over the trailing 30 days. Null when sales is zero. */
+      acos: number;
+      clicks: number;
+      /** Spend over the trailing 30 days. Major units. */
+      cost: number;
+      impressions: number;
+      /** sales / cost over the trailing 30 days. Null when cost is zero. */
+      roas: number;
+      /** Attributed sales over the trailing 30 days. Major units. */
+      sales: number;
+    };
+    /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+    mutations: MutationSummary[];
     name: string;
+    /** Amazon's advertising profile id. */
+    profileId: number;
     state: string;
     targetingType: string;
+    /** All targeting categories, including keywords, automatic and product targets. */
+    targets: Array<{
+      adGroupLocalId: string;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      /** Decimal string rather than a number ("0.85"). parseFloat before comparing. Major units. */
+      bid: string;
+      /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      matchType: string;
+      metrics30: {
+        /** cost / sales over the trailing 30 days. Null when sales is zero. */
+        acos: number;
+        clicks: number;
+        /** Spend over the trailing 30 days. Major units. */
+        cost: number;
+        impressions: number;
+        /** sales / cost over the trailing 30 days. Null when cost is zero. */
+        roas: number;
+        /** Attributed sales over the trailing 30 days. Major units. */
+        sales: number;
+      };
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      state: string;
+      targetId: number;
+      /** Amazon targeting category: keyword, auto, product or product_category. */
+      targetType: string;
+      /** The keyword expression. Named text here and expression in the Ads API. */
+      text: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Target";
+    }>;
+    /** Explicit mutation target type. Use this object as the mutation target. */
+    type: "Campaign";
   };
   /** The raw entity-change payload as Amazon sent it, camelCase and unmodified. Keys differ per stream type, so read defensively. */
   change: {
@@ -415,8 +1007,8 @@ export interface ChangeContext {
   };
   hourlyConversions: unknown;
   hourlyTraffic: unknown;
-  /** Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. */
-  mutations: Record<string, unknown>[];
+  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
+  mutations: MutationRequest[];
   store: {
     /** Removes a key immediately. */
     delete(key: string): void;

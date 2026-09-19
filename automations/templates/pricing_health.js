@@ -44,26 +44,30 @@ function handle(event, context) {
 function queueReprice(context, price) {
   context.mutations.push({
     target: context.listing,
-    patches: [
-      {
-        op: "replace",
-        path: "/attributes/purchasable_offer",
-        value: [
-          {
-            our_price: [{ schedule: [{ value_with_tax: price }] }],
-          },
-        ],
-      },
-    ],
+    action: "update",
+    payload: {
+      productType: context.listing.productType || "PRODUCT",
+      patches: [
+        {
+          op: "replace",
+          path: "/attributes/purchasable_offer",
+          value: [
+            {
+              our_price: [{ schedule: [{ value_with_tax: price }] }],
+            },
+          ],
+        },
+      ],
+    },
   });
 }
 
-// B2C prices our requests set that Amazon may not show yet: queued, or accepted under PROPAGATION_MS ago
+// B2C prices our requests set that Amazon may not show yet: pending, or accepted under PROPAGATION_MS ago
 function pendingPrices(listing) {
   return listing.mutations
     .filter(
       (m) =>
-        m.status === "queued" ||
+        ["queued", "submitting", "uncertain"].includes(m.status) ||
         (m.accepted && Date.now() - Date.parse(m.submittedAt) < PROPAGATION_MS),
     )
     .map((m) => m.payload?.patches?.[0]?.value?.[0])

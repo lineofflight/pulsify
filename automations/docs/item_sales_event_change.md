@@ -102,11 +102,11 @@ function handle(event, context) {
 
 ## Context
 
-Projected currency values on context are in major units (15.27). Raw listing.data retains Amazon's units and types. The list_listings tool reports the same figures in minor units (1527). Never mix them. Some advertising amounts arrive as decimal strings rather than numbers; each says so, and they need parseFloat before arithmetic.
+Projected currency values on context are in major units (15.27). Raw data snapshots retain Amazon's units and types. The list_listings tool reports the same figures in minor units (1527). Never mix them. Some advertising amounts arrive as decimal strings rather than numbers; each says so, and they need parseFloat before arithmetic.
 
 | Path | Type | Nullable | Notes |
 | --- | --- | --- | --- |
-| `mutations` | array | no | Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. |
+| `mutations` | array | no | Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. |
 | `selling_partner` | object | no |  |
 | `selling_partner.id` | string | no |  |
 | `selling_partner.marketplace_id` | string | no | snake_case, as above. |

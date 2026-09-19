@@ -38,11 +38,15 @@ function handle(event, context) {
   //     const target = Math.max(listing.floor, round(listing.price * 0.95));
   //     context.mutations.push({
   //       target: context.listing,
-  //       patches: [{
+  //       action: "update",
+  //       payload: {
+  //         productType: listing.productType || "PRODUCT",
+  //         patches: [{
   //         op: "replace",
   //         path: "/attributes/purchasable_offer",
   //         value: [{ our_price: [{ schedule: [{ value_with_tax: target }] }] }],
-  //       }],
+  //         }],
+  //       },
   //     });
   //   }
   //

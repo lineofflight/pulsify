@@ -30,14 +30,31 @@
             {
               "currency": "USD",
               "minimum_seller_allowed_price": [
-                { "schedule": [{ "value_with_tax": "10.00" }] }
+                {
+                  "schedule": [
+                    {
+                      "value_with_tax": "10.00"
+                    }
+                  ]
+                }
               ],
               "maximum_seller_allowed_price": [
-                { "schedule": [{ "value_with_tax": "25.00" }] }
+                {
+                  "schedule": [
+                    {
+                      "value_with_tax": "25.00"
+                    }
+                  ]
+                }
               ]
             }
           ],
-          "fc_shelf_life": [{ "value": 540, "unit": "days" }]
+          "fc_shelf_life": [
+            {
+              "value": 540,
+              "unit": "days"
+            }
+          ]
         }
       },
       "fba": {
@@ -74,7 +91,13 @@
           "created_at": "2026-06-06T11:00:00Z",
           "submitted_at": null,
           "submission_id": null,
-          "response": {}
+          "response": {},
+          "target_type": "Listing",
+          "target_id": "sample-listing",
+          "action": "update",
+          "outcome": null,
+          "http_status": null,
+          "error_message": null
         }
       ]
     }
@@ -88,7 +111,14 @@
           "name": "Sample Campaign",
           "state": "enabled",
           "budget_amount": 50.0,
-          "targeting_type": "manual"
+          "targeting_type": "manual",
+          "advertising_profile_id": "00000000-0000-0000-0000-000000000001",
+          "data": {
+            "campaignId": "11111",
+            "adProduct": "SPONSORED_PRODUCTS",
+            "state": "ENABLED",
+            "name": "Sample Campaign"
+          }
         },
         "asin_count": 12,
         "metrics": [1500, 45, 22.5, 180.0]
@@ -101,7 +131,18 @@
           "ad_group_id": 22222,
           "name": "Sample Ad Group",
           "state": "enabled",
-          "default_bid": 0.75
+          "default_bid": 0.75,
+          "campaign_id": "00000000-0000-0000-0000-0000000000c1",
+          "data": {
+            "adGroupId": "22222",
+            "campaignId": "11111",
+            "adProduct": "SPONSORED_PRODUCTS",
+            "bidValue": {
+              "defaultBid": {
+                "value": 0.75
+              }
+            }
+          }
         },
         "asin_count": 3,
         "metrics": [900, 30, 15.0, 120.0]
@@ -114,11 +155,18 @@
           "ad_id": 33333,
           "state": "enabled",
           "asin": "B00EXAMPLE01",
-          "sku": "SAMPLE-SKU-1"
+          "sku": "SAMPLE-SKU-1",
+          "ad_group_id": "00000000-0000-0000-0000-0000000000a1",
+          "data": {
+            "adProduct": "SPONSORED_PRODUCTS",
+            "adGroupId": "22222",
+            "state": "ENABLED",
+            "adId": "33333"
+          }
         }
       }
     ],
-    "keywords": [
+    "targets": [
       {
         "attributes": {
           "id": "00000000-0000-0000-0000-0000000000e1",
@@ -127,10 +175,46 @@
           "match_type": "exact",
           "state": "enabled",
           "bid": 0.85,
-          "target_type": "keyword"
+          "target_type": "keyword",
+          "ad_group_id": "00000000-0000-0000-0000-0000000000a1",
+          "data": {
+            "adProduct": "SPONSORED_PRODUCTS",
+            "adGroupId": "22222",
+            "state": "ENABLED",
+            "targetId": "44444"
+          }
         },
         "metrics": [400, 12, 6.0, 60.0]
+      },
+      {
+        "attributes": {
+          "id": "00000000-0000-0000-0000-0000000000e2",
+          "target_id": 44445,
+          "expression": "B00EXAMPLE02",
+          "match_type": null,
+          "state": "enabled",
+          "bid": 0.85,
+          "target_type": "product",
+          "ad_group_id": "00000000-0000-0000-0000-0000000000a1",
+          "data": {
+            "targetId": "44445",
+            "adProduct": "SPONSORED_PRODUCTS",
+            "state": "ENABLED",
+            "targetDetails": {
+              "product": {
+                "asin": "B00EXAMPLE02"
+              }
+            }
+          }
+        },
+        "metrics": [100, 3, 1.5, 20.0]
       }
     ]
+  },
+  "advertising_profile": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "profile_id": 888888888,
+    "currency_code": "USD",
+    "marketplace_id": "ATVPDKIKX0DER"
   }
 }

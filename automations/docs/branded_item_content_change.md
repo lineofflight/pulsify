@@ -71,13 +71,18 @@ function handle(event, context) {
 
 ## Context
 
-Projected currency values on context are in major units (15.27). Raw listing.data retains Amazon's units and types. The list_listings tool reports the same figures in minor units (1527). Never mix them. Some advertising amounts arrive as decimal strings rather than numbers; each says so, and they need parseFloat before arithmetic.
+Projected currency values on context are in major units (15.27). Raw data snapshots retain Amazon's units and types. The list_listings tool reports the same figures in minor units (1527). Never mix them. Some advertising amounts arrive as decimal strings rather than numbers; each says so, and they need parseFloat before arithmetic.
 
 | Path | Type | Nullable | Notes |
 | --- | --- | --- | --- |
 | `listing` | object | no |  |
 | `listing.adGroups` | array | no |  |
+| `listing.adGroups[].adGroupId` | number | yes |  |
+| `listing.adGroups[].advertisingProfileId` | string | yes | Pulsify's local advertising profile id. |
 | `listing.adGroups[].asinCount` | number | no | Distinct ASINs advertised in the ad group. |
+| `listing.adGroups[].campaignLocalId` | string | yes |  |
+| `listing.adGroups[].currencyCode` | string | yes | Currency of the listing marketplace or advertising profile. Native Ads money uses major units. |
+| `listing.adGroups[].data` | object | no | Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. |
 | `listing.adGroups[].defaultBid` | string | yes | Decimal string rather than a number ("0.75"). parseFloat before comparing. |
 | `listing.adGroups[].id` | string | yes |  |
 | `listing.adGroups[].metrics30` | object | no |  |
@@ -87,21 +92,37 @@ Projected currency values on context are in major units (15.27). Raw listing.dat
 | `listing.adGroups[].metrics30.impressions` | number | no |  |
 | `listing.adGroups[].metrics30.roas` | number | yes | sales / cost over the trailing 30 days. Null when cost is zero. |
 | `listing.adGroups[].metrics30.sales` | number | no | Attributed sales over the trailing 30 days. |
+| `listing.adGroups[].mutations` | array | no | All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. |
 | `listing.adGroups[].name` | string | yes |  |
+| `listing.adGroups[].profileId` | number | yes | Amazon's advertising profile id. |
 | `listing.adGroups[].state` | string | yes |  |
+| `listing.adGroups[].type` | string | no | Explicit mutation target type. Use this object as the mutation target. |
 | `listing.ads` | array | no |  |
+| `listing.ads[].adGroupLocalId` | string | yes |  |
+| `listing.ads[].adId` | number | yes |  |
+| `listing.ads[].advertisingProfileId` | string | yes | Pulsify's local advertising profile id. |
 | `listing.ads[].asin` | string | yes |  |
+| `listing.ads[].currencyCode` | string | yes | Currency of the listing marketplace or advertising profile. Native Ads money uses major units. |
+| `listing.ads[].data` | object | no | Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. |
 | `listing.ads[].id` | string | yes |  |
+| `listing.ads[].mutations` | array | no | All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. |
+| `listing.ads[].profileId` | number | yes | Amazon's advertising profile id. |
 | `listing.ads[].sku` | string | yes |  |
 | `listing.ads[].state` | string | yes |  |
+| `listing.ads[].type` | string | no | Explicit mutation target type. Use this object as the mutation target. |
 | `listing.asin` | string | no |  |
 | `listing.b2bPrice` | number | yes | Null when the listing has no B2B offer. |
 | `listing.b2bUnitsSold` | number | no | Trailing 30 days, rolled up eagerly. Always a number: zero rather than absent with no B2B sales. |
 | `listing.blocked` | boolean | no |  |
 | `listing.buyable` | boolean | yes | Null while statuses is null. Do not read a null as false. |
 | `listing.campaigns` | array | no |  |
+| `listing.campaigns[].adProduct` | string | yes |  |
+| `listing.campaigns[].advertisingProfileId` | string | yes | Pulsify's local advertising profile id. |
 | `listing.campaigns[].asinCount` | number | no | Distinct ASINs advertised in the campaign, not just this listing's. |
 | `listing.campaigns[].budget` | string | yes | Daily budget in major units, and a decimal string rather than a number ("50.0"). parseFloat before comparing. |
+| `listing.campaigns[].campaignId` | number | yes |  |
+| `listing.campaigns[].currencyCode` | string | yes | Currency of the listing marketplace or advertising profile. Native Ads money uses major units. |
+| `listing.campaigns[].data` | object | no | Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. |
 | `listing.campaigns[].id` | string | yes |  |
 | `listing.campaigns[].metrics30` | object | no |  |
 | `listing.campaigns[].metrics30.acos` | number | yes | cost / sales over the trailing 30 days. Null when sales is zero. |
@@ -110,12 +131,16 @@ Projected currency values on context are in major units (15.27). Raw listing.dat
 | `listing.campaigns[].metrics30.impressions` | number | no |  |
 | `listing.campaigns[].metrics30.roas` | number | yes | sales / cost over the trailing 30 days. Null when cost is zero. |
 | `listing.campaigns[].metrics30.sales` | number | no | Attributed sales over the trailing 30 days. |
+| `listing.campaigns[].mutations` | array | no | All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. |
 | `listing.campaigns[].name` | string | yes |  |
+| `listing.campaigns[].profileId` | number | yes | Amazon's advertising profile id. |
 | `listing.campaigns[].state` | string | yes |  |
 | `listing.campaigns[].targetingType` | string | yes |  |
+| `listing.campaigns[].type` | string | no | Explicit mutation target type. Use this object as the mutation target. |
 | `listing.ceiling` | number | yes | Upper price bound as Amazon last reported it. Null when unset. Same lifecycle as floor. |
 | `listing.condition` | string | yes | Family of conditionType: new, used, collectible, refurbished or club. Null until Amazon reports it. |
 | `listing.conditionType` | string | yes | Amazon's full condition token, such as used_very_good. Null until the listing item reports it. |
+| `listing.currencyCode` | string | no | Currency of the listing marketplace or advertising profile. Native Ads money uses major units. |
 | `listing.data` | object | no | Raw Amazon source snapshots, with original keys and units. Contents vary with the sources received; missing sources are absent. FBA report stock is under data.fba.inventory (afn-fulfillable-quantity, afn-inbound-shipped-quantity, etc.). Submitted MFN stock is under data.listings_item.attributes.fulfillment_availability; observed availability is under data.listings_item.fulfillmentAvailability. data.notifications holds the latest accepted envelope of each type, including EventTime. Notifications do not overwrite report or crawl snapshots. Choose the source and stock measure your automation needs. |
 | `listing.deleted` | boolean | yes | Null while statuses is null. Do not read a null as false. |
 | `listing.discoverable` | boolean | yes | Null while statuses is null. Do not read a null as false. |
@@ -149,7 +174,11 @@ Projected currency values on context are in major units (15.27). Raw listing.dat
 | `listing.handlingTime` | number | yes | Business days from order to ship (Amazon's lead_time_to_ship_max_days). Null when the SKU uses the account's default handling time. Writable on listings you fulfil yourself. A write queues only the requested handling time; it does not resend observed stock. |
 | `listing.id` | string | no |  |
 | `listing.keywords` | array | no |  |
+| `listing.keywords[].adGroupLocalId` | string | yes |  |
+| `listing.keywords[].advertisingProfileId` | string | yes | Pulsify's local advertising profile id. |
 | `listing.keywords[].bid` | string | yes | Decimal string rather than a number ("0.85"). parseFloat before comparing. |
+| `listing.keywords[].currencyCode` | string | yes | Currency of the listing marketplace or advertising profile. Native Ads money uses major units. |
+| `listing.keywords[].data` | object | no | Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. |
 | `listing.keywords[].id` | string | yes |  |
 | `listing.keywords[].matchType` | string | yes |  |
 | `listing.keywords[].metrics30` | object | no |  |
@@ -159,27 +188,62 @@ Projected currency values on context are in major units (15.27). Raw listing.dat
 | `listing.keywords[].metrics30.impressions` | number | no |  |
 | `listing.keywords[].metrics30.roas` | number | yes | sales / cost over the trailing 30 days. Null when cost is zero. |
 | `listing.keywords[].metrics30.sales` | number | no | Attributed sales over the trailing 30 days. |
+| `listing.keywords[].mutations` | array | no | All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. |
+| `listing.keywords[].profileId` | number | yes | Amazon's advertising profile id. |
 | `listing.keywords[].state` | string | yes |  |
+| `listing.keywords[].targetId` | number | yes |  |
+| `listing.keywords[].targetType` | string | no | Amazon targeting category: keyword, auto, product or product_category. |
 | `listing.keywords[].text` | string | yes | The keyword expression. Named text here and expression in the Ads API. |
-| `listing.mutations` | array | no | Recent mutations for the listing: all queued requests and the latest submission. Use status === "queued" to check for in-flight changes. |
+| `listing.keywords[].type` | string | no | Explicit mutation target type. Use this object as the mutation target. |
+| `listing.mutations` | array | no | All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. |
 | `listing.mutations[].accepted` | boolean | no | Whether Amazon accepted the request for processing; false when rejected. |
+| `listing.mutations[].action` | string | no |  |
 | `listing.mutations[].createdAt` | string | no |  |
+| `listing.mutations[].errorMessage` | string | no | Provider or validation error, when available. |
+| `listing.mutations[].httpStatus` | number | no | Provider HTTP status. A 207 container can contain rejected or partial results; inspect outcome. |
 | `listing.mutations[].id` | string | no |  |
+| `listing.mutations[].outcome` | string | no | Provider outcome, distinct from delivery status and observed entity data. |
 | `listing.mutations[].payload` | object | no |  |
 | `listing.mutations[].response` | object | no |  |
-| `listing.mutations[].status` | string | no | "queued" (awaiting submission) or "submitted" (Amazon response recorded). |
+| `listing.mutations[].status` | string | no | "queued", "submitting", "submitted", "blocked", or "uncertain". Uncertain work is never blindly retried. |
 | `listing.mutations[].submissionId` | string | no | Amazon's submissionId for the patch that carried this mutation. |
 | `listing.mutations[].submittedAt` | string | no | ISO 8601 timestamp when Amazon's response was recorded. |
+| `listing.mutations[].targetId` | string | no |  |
+| `listing.mutations[].targetType` | string | no | Explicit type of the receipt target. |
 | `listing.price` | number | yes | Major units (15.27). list_listings reports the same figure as 1527. |
+| `listing.productType` | string | yes | Amazon product type for native listing patches. Use PRODUCT when absent. |
 | `listing.restockDate` | string | yes | YYYY-MM-DD the listing is back in stock. Null when unset. Writable on listings you fulfil yourself. |
 | `listing.shipping` | number | yes | Zero when Amazon fulfils. On a listing you fulfil, null until an offer event carries your own offer; Pulsify no longer polls for it. |
 | `listing.shippingGroup` | string | yes | Merchant shipping template id, not its display name. Null until Amazon reports one; FBA listings have none. Writable on listings you fulfil yourself. |
 | `listing.statuses` | array | yes | Null until Amazon first reports listing status. Null means unknown, not empty. buyable, discoverable and deleted derive from it and are null alongside it. |
 | `listing.statuses[]` | string | no | One of "BUYABLE", "DISCOVERABLE", "DELETED". |
+| `listing.targets` | array | no | All targeting categories, including keywords, automatic and product targets. |
+| `listing.targets[].adGroupLocalId` | string | yes |  |
+| `listing.targets[].advertisingProfileId` | string | yes | Pulsify's local advertising profile id. |
+| `listing.targets[].bid` | string | yes | Decimal string rather than a number ("0.85"). parseFloat before comparing. |
+| `listing.targets[].currencyCode` | string | yes | Currency of the listing marketplace or advertising profile. Native Ads money uses major units. |
+| `listing.targets[].data` | object | no | Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. |
+| `listing.targets[].id` | string | yes |  |
+| `listing.targets[].matchType` | string | yes |  |
+| `listing.targets[].metrics30` | object | no |  |
+| `listing.targets[].metrics30.acos` | number | yes | cost / sales over the trailing 30 days. Null when sales is zero. |
+| `listing.targets[].metrics30.clicks` | number | no |  |
+| `listing.targets[].metrics30.cost` | number | no | Spend over the trailing 30 days. |
+| `listing.targets[].metrics30.impressions` | number | no |  |
+| `listing.targets[].metrics30.roas` | number | yes | sales / cost over the trailing 30 days. Null when cost is zero. |
+| `listing.targets[].metrics30.sales` | number | no | Attributed sales over the trailing 30 days. |
+| `listing.targets[].mutations` | array | no | All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. |
+| `listing.targets[].profileId` | number | yes | Amazon's advertising profile id. |
+| `listing.targets[].state` | string | yes |  |
+| `listing.targets[].targetId` | number | yes |  |
+| `listing.targets[].targetType` | string | no | Amazon targeting category: keyword, auto, product or product_category. |
+| `listing.targets[].text` | string | yes | The keyword expression. Named text here and expression in the Ads API. |
+| `listing.targets[].type` | string | no | Explicit mutation target type. Use this object as the mutation target. |
+| `listing.type` | string | no | Explicit mutation target type. Use this object as the mutation target. |
 | `marketplace` | object | no |  |
 | `marketplace.marketplaceId` | string | no | The listing's marketplace, e.g. "ATVPDKIKX0DER". Matches the MarketplaceId Amazon sends on region-wide events, so use it to pick the entry for this listing rather than reading marketplace id out of raw listing data. |
 | `marketplace.timeZone` | string | no | IANA zone for the listing's marketplace. Use it for any hour-of-day logic. |
-| `mutations` | array | no | Mutation outbox array, drained by the runtime after handle returns. Name the target with the object the context gave you: context.listing, or an entry from listing.campaigns, listing.adGroups, listing.keywords or listing.ads. A listing write carries a non-empty patches array of native Amazon operations; flat fields such as price, floor and quantity are not accepted, and update_listing is what blocks or allows automated changes. An ads write carries action "pause" or "resume", or names an allowlisted attribute directly: state and budget on a campaign, state and defaultBid on an ad group, state on an ad, state and bid on a keyword. Automations on advertising events queue campaign writes only; the ad group, ad and keyword attributes apply on selling events. |
+| `mutations` | array | no | Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. |
 | `store` | object | no |  |
 | `webhooks` | object | no | One entry per enabled webhook on the account, keyed by name. Call webhooks.<name>.post(payload); a string payload is wrapped as { text: ... }. Empty when the account has none. |
 

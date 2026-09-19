@@ -208,25 +208,29 @@ function round(value) {
 }
 
 function queueReprice(context, price, myOffer) {
-  // Amazon already shows this price, or a queued request already asks for it
+  // Amazon already shows this price, or a pending request already asks for it
   const queued = context.listing.mutations
-    .filter((m) => m.status === "queued")
+    .filter((m) => ["queued", "submitting", "uncertain"].includes(m.status))
     .map(requestedPrice);
   if (price === myOffer.ListingPrice?.Amount || queued.includes(price)) return;
 
   context.mutations.push({
     target: context.listing,
-    patches: [
-      {
-        op: "replace",
-        path: "/attributes/purchasable_offer",
-        value: [
-          {
-            our_price: [{ schedule: [{ value_with_tax: price }] }],
-          },
-        ],
-      },
-    ],
+    action: "update",
+    payload: {
+      productType: context.listing.productType || "PRODUCT",
+      patches: [
+        {
+          op: "replace",
+          path: "/attributes/purchasable_offer",
+          value: [
+            {
+              our_price: [{ schedule: [{ value_with_tax: price }] }],
+            },
+          ],
+        },
+      ],
+    },
   });
 }
 

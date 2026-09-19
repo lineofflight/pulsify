@@ -14,11 +14,15 @@ function handle(event, context) {
   const price = Math.max(listing.floor, Math.min(19.99, listing.ceiling));
   context.mutations.push({
     target: context.listing,
-    patches: [{
-      op: "replace",
-      path: "/attributes/purchasable_offer",
-      value: [{ our_price: [{ schedule: [{ value_with_tax: price }] }] }],
-    }],
+    action: "update",
+    payload: {
+      productType: listing.productType || "PRODUCT",
+      patches: [{
+        op: "replace",
+        path: "/attributes/purchasable_offer",
+        value: [{ our_price: [{ schedule: [{ value_with_tax: price }] }] }],
+      }],
+    },
   });
 
   return context;
@@ -27,7 +31,14 @@ function handle(event, context) {
 
 `event` is the raw Amazon notification. `context` is what Pulsify knows about the
 listing, campaign, or account the event concerns, plus the `mutations` outbox array.
-Every currency value on `context` is in major units (15.27).
+Projected currency values use major units (15.27). Raw `data` preserves Amazon's
+original keys and units. Every write uses `{ target, action, payload }`:
+listing `update` payloads contain `productType` and native `patches`; Ads `update`
+payloads contain native Sponsored Products fields, and Ads `archive` uses `{}`.
+Targets expose their explicit `type`, local `id`, native `data`, currency/profile
+identity, and `mutations` with pending requests and recent outcomes. Campaign
+contexts include `adGroups`, `ads`, and all `targets`, as listing contexts do.
+Use the `get_mutation_schema` MCP tool for the accepted native payload schema.
 
 ## Install
 
@@ -35,7 +46,7 @@ Every currency value on `context` is in major units (15.27).
 npm install --save-dev @lineofflight/pulsify-automations
 ```
 
-Version 2026.918.0. Types only — there is no runtime to import. The templates are
+Version 2026.919.0. Types only — there is no runtime to import. The templates are
 source you copy into an automation.
 
 ## Streams
