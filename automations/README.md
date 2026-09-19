@@ -35,9 +35,14 @@ Projected currency values use major units (15.27). Raw `data` preserves Amazon's
 original keys and units. Every write uses `{ target, action, payload }`:
 listing `update` payloads contain `productType` and native `patches`; Ads `update`
 payloads contain native Sponsored Products fields, and Ads `archive` uses `{}`.
+A creation targets the authorized parent: `create_campaign` an entry of
+`advertisingProfiles`, `create_ad_group` a campaign, `create_ad` an ad group, and
+`create_target` an ad group or, for an exclusion, a campaign. Nothing comes back
+synchronously. A later run reads the parent's `mutations[].created` and targets it.
 Targets expose their explicit `type`, local `id`, native `data`, currency/profile
 identity, and `mutations` with pending requests and recent outcomes. Campaign
 contexts include `adGroups`, `ads`, and all `targets`, as listing contexts do.
+Exclusions live in `negativeTargets`, with no bid and no metrics.
 Use the `get_mutation_schema` MCP tool for the accepted native payload schema.
 
 ## Install

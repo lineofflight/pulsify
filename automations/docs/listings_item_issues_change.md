@@ -90,6 +90,33 @@ Projected currency values on context are in major units (15.27). Raw data snapsh
 
 | Path | Type | Nullable | Notes |
 | --- | --- | --- | --- |
+| `advertisingProfiles` | array | no | The advertising profiles create_campaign may target: on a listing, the account's profiles in the listing's marketplace; on a campaign or portfolio, its own profile. Empty when the account has no Ads connection there. |
+| `advertisingProfiles[].countryCode` | string | yes | Two-letter country of the profile's marketplace. A new campaign's countries and marketplaces, when given, must name only this. |
+| `advertisingProfiles[].currencyCode` | string | yes | Currency of every budget and bid under this profile. Native Ads money uses major units. |
+| `advertisingProfiles[].id` | string | yes | Pulsify's local advertising profile id. With type, it names this profile as a mutation target. |
+| `advertisingProfiles[].marketplaceId` | string | yes |  |
+| `advertisingProfiles[].mutations` | array | no | Campaign creations requested on this profile: every queued, submitting and uncertain request, plus the latest settled receipt of each attempted creation. Read created for the new campaign. |
+| `advertisingProfiles[].mutations[].accepted` | boolean | no | True once Amazon confirmed the creation, false when it rejected it or reconciliation found nothing, null while the result is unknown. |
+| `advertisingProfiles[].mutations[].action` | string | no |  |
+| `advertisingProfiles[].mutations[].created` | object | no | The entity this creation produced, once Amazon confirmed it; null until then and for every update or archive. Its type and id are a valid mutation target, so the next step of a launch can target it directly. |
+| `advertisingProfiles[].mutations[].created.id` | string | no | Pulsify's local id of the created entity. Null in the rare case Amazon returned a shape Pulsify could not store; the next sync adds it. |
+| `advertisingProfiles[].mutations[].created.providerId` | string | no | Amazon's id of the created entity. |
+| `advertisingProfiles[].mutations[].created.type` | string | no | Campaign, AdGroup, Ad or Target. |
+| `advertisingProfiles[].mutations[].createdAt` | string | no |  |
+| `advertisingProfiles[].mutations[].errorMessage` | string | no | Provider or validation error, when available. |
+| `advertisingProfiles[].mutations[].httpStatus` | number | no | Provider HTTP status. A 207 container can contain a rejected result; inspect outcome. |
+| `advertisingProfiles[].mutations[].id` | string | no |  |
+| `advertisingProfiles[].mutations[].outcome` | string | no | accepted, rejected, retryable, blocked, uncertain, absent or unresolved. A creation whose reply was lost is never sent again: Pulsify asks Amazon what exists and settles it as accepted, as absent (nothing was created; request it again if still wanted) or as unresolved (several entities could be it). |
+| `advertisingProfiles[].mutations[].payload` | object | no |  |
+| `advertisingProfiles[].mutations[].reconciliation` | object | no | What reconciliation established for an uncertain creation: result, attempts, checkedAt, nextAt, candidates and cause. Empty for a request whose result was never in doubt. |
+| `advertisingProfiles[].mutations[].response` | object | no |  |
+| `advertisingProfiles[].mutations[].status` | string | no | "queued", "submitting", "submitted", "blocked", "uncertain" or "unresolved". Pending while queued, submitting or uncertain; an uncertain creation does not hold back other requests for its parent. "unresolved" is final: reconciliation could not tell which entity, if any, this request created. |
+| `advertisingProfiles[].mutations[].submissionId` | string | no | Amazon's request id for the call that carried this request. |
+| `advertisingProfiles[].mutations[].submittedAt` | string | no | ISO 8601 timestamp when the result was recorded. |
+| `advertisingProfiles[].mutations[].targetId` | string | no |  |
+| `advertisingProfiles[].mutations[].targetType` | string | no | Explicit type of the receipt target. For a creation this is the parent, never the created child. |
+| `advertisingProfiles[].profileId` | number | yes | Amazon's advertising profile id. |
+| `advertisingProfiles[].type` | string | no | Explicit mutation target type. Use this object as the target of create_campaign. |
 | `listing` | object | no |  |
 | `listing.adGroups` | array | no |  |
 | `listing.adGroups[].adGroupId` | number | yes |  |
@@ -213,18 +240,36 @@ Projected currency values on context are in major units (15.27). Raw data snapsh
 | `listing.mutations` | array | no | All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. |
 | `listing.mutations[].accepted` | boolean | no | Whether Amazon accepted the request for processing; false when rejected. |
 | `listing.mutations[].action` | string | no |  |
+| `listing.mutations[].created` | object | no | The entity a creation produced. Always null on a listing, which supports update only. |
 | `listing.mutations[].createdAt` | string | no |  |
 | `listing.mutations[].errorMessage` | string | no | Provider or validation error, when available. |
 | `listing.mutations[].httpStatus` | number | no | Provider HTTP status. A 207 container can contain rejected or partial results; inspect outcome. |
 | `listing.mutations[].id` | string | no |  |
 | `listing.mutations[].outcome` | string | no | Provider outcome, distinct from delivery status and observed entity data. |
 | `listing.mutations[].payload` | object | no |  |
+| `listing.mutations[].reconciliation` | object | no | What reconciliation established for an uncertain creation. Always empty on a listing. |
 | `listing.mutations[].response` | object | no |  |
 | `listing.mutations[].status` | string | no | "queued", "submitting", "submitted", "blocked", or "uncertain". Uncertain work is never blindly retried. |
 | `listing.mutations[].submissionId` | string | no | Amazon's submissionId for the patch that carried this mutation. |
 | `listing.mutations[].submittedAt` | string | no | ISO 8601 timestamp when Amazon's response was recorded. |
 | `listing.mutations[].targetId` | string | no |  |
 | `listing.mutations[].targetType` | string | no | Explicit type of the receipt target. |
+| `listing.negativeTargets` | array | no | Exclusions: negative keywords and negative product targets, at ad-group and campaign level. Kept apart from targets and keywords because nothing bids on them and Amazon reports no performance for them, so they carry no bid and no metrics30. Update and archive them like any target. |
+| `listing.negativeTargets[].adGroupLocalId` | string | yes | Pulsify's local ad group id. Null for a campaign-level exclusion. |
+| `listing.negativeTargets[].advertisingProfileId` | string | yes | Pulsify's local advertising profile id. |
+| `listing.negativeTargets[].campaignLocalId` | string | yes | Pulsify's local campaign id. Every exclusion belongs to a campaign. |
+| `listing.negativeTargets[].currencyCode` | string | yes | Currency of the advertising profile. |
+| `listing.negativeTargets[].data` | object | no | Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. |
+| `listing.negativeTargets[].id` | string | yes |  |
+| `listing.negativeTargets[].level` | string | no | Amazon's targetLevel: AD_GROUP or CAMPAIGN. |
+| `listing.negativeTargets[].matchType` | string | yes |  |
+| `listing.negativeTargets[].mutations` | array | no | All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. |
+| `listing.negativeTargets[].profileId` | number | yes | Amazon's advertising profile id. |
+| `listing.negativeTargets[].state` | string | yes |  |
+| `listing.negativeTargets[].targetId` | number | yes |  |
+| `listing.negativeTargets[].targetType` | string | no | Amazon targeting category: keyword, product or product_category. |
+| `listing.negativeTargets[].text` | string | yes | The excluded keyword or product expression. Named text here and expression in the Ads API. |
+| `listing.negativeTargets[].type` | string | no | Explicit mutation target type. Use this object as the mutation target. |
 | `listing.price` | number | yes | Major units (15.27). list_listings reports the same figure as 1527. |
 | `listing.productType` | string | yes | Amazon product type for native listing patches. Use PRODUCT when absent. |
 | `listing.restockDate` | string | yes | YYYY-MM-DD the listing is back in stock. Null when unset. Writable on listings you fulfil yourself. |
@@ -232,7 +277,7 @@ Projected currency values on context are in major units (15.27). Raw data snapsh
 | `listing.shippingGroup` | string | yes | Merchant shipping template id, not its display name. Null until Amazon reports one; FBA listings have none. Writable on listings you fulfil yourself. |
 | `listing.statuses` | array | yes | Null until Amazon first reports listing status. Null means unknown, not empty. buyable, discoverable and deleted derive from it and are null alongside it. |
 | `listing.statuses[]` | string | no | One of "BUYABLE", "DISCOVERABLE", "DELETED". |
-| `listing.targets` | array | no | All targeting categories, including keywords, automatic and product targets. |
+| `listing.targets` | array | no | Every positive targeting category: keywords, automatic and product targets. Exclusions are in negativeTargets. |
 | `listing.targets[].adGroupLocalId` | string | yes |  |
 | `listing.targets[].advertisingProfileId` | string | yes | Pulsify's local advertising profile id. |
 | `listing.targets[].bid` | string | yes | Decimal string rather than a number ("0.85"). parseFloat before comparing. |
@@ -258,7 +303,7 @@ Projected currency values on context are in major units (15.27). Raw data snapsh
 | `marketplace` | object | no |  |
 | `marketplace.marketplaceId` | string | no | The listing's marketplace, e.g. "ATVPDKIKX0DER". Matches the MarketplaceId Amazon sends on region-wide events, so use it to pick the entry for this listing rather than reading marketplace id out of raw listing data. |
 | `marketplace.timeZone` | string | no | IANA zone for the listing's marketplace. Use it for any hour-of-day logic. |
-| `mutations` | array | no | Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. |
+| `mutations` | array | no | Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. A creation targets the authorized parent: create_campaign an entry of advertisingProfiles, create_ad_group a campaign, create_ad an ad group, create_target an ad group or, for an exclusion, a campaign. Its payload is Amazon's native create object; Pulsify derives adProduct and the parent ID. Nothing is returned synchronously: a later run reads the parent's mutations[].created and targets it. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. |
 | `store` | object | no |  |
 | `webhooks` | object | no | One entry per enabled webhook on the account, keyed by name. Call webhooks.<name>.post(payload); a string payload is wrapped as { text: ... }. Empty when the account has none. |
 

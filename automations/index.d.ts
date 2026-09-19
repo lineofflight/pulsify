@@ -5,8 +5,9 @@
 // receives.
 
 export type AdsTargetType = "Campaign" | "AdGroup" | "Ad" | "Target";
-export interface MutationTarget<T extends "Listing" | AdsTargetType> { type: T; id: string }
-/** Native Sponsored Products update object. Discover fields with get_mutation_schema. */
+export type MutationTargetType = "Listing" | "AdvertisingProfile" | AdsTargetType;
+export interface MutationTarget<T extends MutationTargetType> { type: T; id: string }
+/** Native Sponsored Products update or create object. Discover fields with get_mutation_schema. */
 export type NativeAdsPayload = Record<string, unknown>;
 export interface ListingPatch {
   op: "add" | "replace" | "delete" | "merge";
@@ -20,14 +21,25 @@ export type MutationRequest =
       payload: { productType: string; patches: ListingPatch[] };
     }
   | { target: MutationTarget<AdsTargetType>; action: "update"; payload: NativeAdsPayload }
-  | { target: MutationTarget<AdsTargetType>; action: "archive"; payload: Record<string, never> };
+  | { target: MutationTarget<AdsTargetType>; action: "archive"; payload: Record<string, never> }
+  // A creation targets the authorized parent. The created child arrives later, on the parent's receipt.
+  | { target: MutationTarget<"AdvertisingProfile">; action: "create_campaign"; payload: NativeAdsPayload }
+  | {
+      target: MutationTarget<"Campaign">;
+      action: "create_ad_group" | "create_target";
+      payload: NativeAdsPayload;
+    }
+  | { target: MutationTarget<"AdGroup">; action: "create_ad" | "create_target"; payload: NativeAdsPayload };
+
+export type CreationAction = "create_campaign" | "create_ad_group" | "create_ad" | "create_target";
 
 export interface MutationSummary {
   id: string;
-  targetType: "Listing" | AdsTargetType;
+  targetType: MutationTargetType;
   targetId: string;
-  action: "update" | "archive";
-  status: "queued" | "submitting" | "submitted" | "blocked" | "uncertain";
+  action: "update" | "archive" | CreationAction;
+  /** Pending while queued, submitting or uncertain. Every other status is final. */
+  status: "queued" | "submitting" | "submitted" | "blocked" | "uncertain" | "unresolved";
   outcome: string | null;
   accepted: boolean | null;
   payload: Record<string, unknown>;
@@ -37,6 +49,10 @@ export interface MutationSummary {
   createdAt: string;
   submittedAt: string | null;
   submissionId: string | null;
+  /** What a confirmed creation produced. It is itself a valid target for the next request. */
+  created: (MutationTarget<AdsTargetType> & { id: string | null; providerId: string }) | null;
+  /** What reconciliation established for a creation whose reply was lost. */
+  reconciliation: Record<string, unknown>;
 }
 
 export interface ListingContext {
@@ -45,6 +61,22 @@ export interface ListingContext {
     id: string;
     name: string;
   };
+  /** The advertising profiles create_campaign may target: on a listing, the account's profiles in the listing's marketplace; on a campaign or portfolio, its own profile. Empty when the account has no Ads connection there. */
+  advertisingProfiles: Array<{
+    /** Two-letter country of the profile's marketplace. A new campaign's countries and marketplaces, when given, must name only this. */
+    countryCode: string | null;
+    /** Currency of every budget and bid under this profile. Native Ads money uses major units. */
+    currencyCode: string | null;
+    /** Pulsify's local advertising profile id. With type, it names this profile as a mutation target. */
+    id: string;
+    marketplaceId: string | null;
+    /** Campaign creations requested on this profile: every queued, submitting and uncertain request, plus the latest settled receipt of each attempted creation. Read created for the new campaign. */
+    mutations: MutationSummary[];
+    /** Amazon's advertising profile id. */
+    profileId: number | null;
+    /** Explicit mutation target type. Use this object as the target of create_campaign. */
+    type: "AdvertisingProfile";
+  }>;
   listing: {
     adGroups: Array<{
       adGroupId: number | null;
@@ -241,6 +273,35 @@ export interface ListingContext {
     }>;
     /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
     mutations: MutationSummary[];
+    /** Exclusions: negative keywords and negative product targets, at ad-group and campaign level. Kept apart from targets and keywords because nothing bids on them and Amazon reports no performance for them, so they carry no bid and no metrics30. Update and archive them like any target. */
+    negativeTargets: Array<{
+      /** Pulsify's local ad group id. Null for a campaign-level exclusion. */
+      adGroupLocalId: string | null;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string | null;
+      /** Pulsify's local campaign id. Every exclusion belongs to a campaign. */
+      campaignLocalId: string | null;
+      /** Currency of the advertising profile. */
+      currencyCode: string | null;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      /** Amazon's targetLevel: AD_GROUP or CAMPAIGN. */
+      level: string;
+      matchType: string | null;
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number | null;
+      state: string | null;
+      targetId: number | null;
+      /** Amazon targeting category: keyword, product or product_category. */
+      targetType: string;
+      /** The excluded keyword or product expression. Named text here and expression in the Ads API. */
+      text: string | null;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Target";
+    }>;
     /** Major units (15.27). list_listings reports the same figure as 1527. Major units. */
     price: number | null;
     /** Amazon product type for native listing patches. Use PRODUCT when absent. */
@@ -253,7 +314,7 @@ export interface ListingContext {
     shippingGroup: string | null;
     /** One of "BUYABLE", "DISCOVERABLE", "DELETED". */
     statuses: Array<string>;
-    /** All targeting categories, including keywords, automatic and product targets. */
+    /** Every positive targeting category: keywords, automatic and product targets. Exclusions are in negativeTargets. */
     targets: Array<{
       adGroupLocalId: string | null;
       /** Pulsify's local advertising profile id. */
@@ -300,7 +361,7 @@ export interface ListingContext {
     /** IANA zone for the listing's marketplace. Use it for any hour-of-day logic. */
     timeZone: string;
   };
-  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
+  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. A creation targets the authorized parent: create_campaign an entry of advertisingProfiles, create_ad_group a campaign, create_ad an ad group, create_target an ad group or, for an exclusion, a campaign. Its payload is Amazon's native create object; Pulsify derives adProduct and the parent ID. Nothing is returned synchronously: a later run reads the parent's mutations[].created and targets it. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
   mutations: MutationRequest[];
   store: {
     /** Removes a key immediately. */
@@ -320,7 +381,7 @@ export interface SellerContext {
     id: string;
     name: string;
   };
-  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
+  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. A creation targets the authorized parent: create_campaign an entry of advertisingProfiles, create_ad_group a campaign, create_ad an ad group, create_target an ad group or, for an exclusion, a campaign. Its payload is Amazon's native create object; Pulsify derives adProduct and the parent ID. Nothing is returned synchronously: a later run reads the parent's mutations[].created and targets it. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
   mutations: MutationRequest[];
   selling_partner: {
     id: string;
@@ -347,6 +408,22 @@ export interface CampaignContext {
     id: string;
     name: string;
   };
+  /** The advertising profiles create_campaign may target: on a listing, the account's profiles in the listing's marketplace; on a campaign or portfolio, its own profile. Empty when the account has no Ads connection there. */
+  advertisingProfiles: Array<{
+    /** Two-letter country of the profile's marketplace. A new campaign's countries and marketplaces, when given, must name only this. */
+    countryCode: string;
+    /** Currency of every budget and bid under this profile. Native Ads money uses major units. */
+    currencyCode: string;
+    /** Pulsify's local advertising profile id. With type, it names this profile as a mutation target. */
+    id: string;
+    marketplaceId: string;
+    /** Campaign creations requested on this profile: every queued, submitting and uncertain request, plus the latest settled receipt of each attempted creation. Read created for the new campaign. */
+    mutations: MutationSummary[];
+    /** Amazon's advertising profile id. */
+    profileId: number;
+    /** Explicit mutation target type. Use this object as the target of create_campaign. */
+    type: "AdvertisingProfile";
+  }>;
   budget: {
     /** The budget figure carried by the firing event, not the campaign's current budget. Null outside budget-usage events. Major units. */
     amount: number;
@@ -479,11 +556,40 @@ export interface CampaignContext {
     /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
     mutations: MutationSummary[];
     name: string;
+    /** Exclusions: negative keywords and negative product targets, at ad-group and campaign level. Kept apart from targets and keywords because nothing bids on them and Amazon reports no performance for them, so they carry no bid and no metrics30. Update and archive them like any target. */
+    negativeTargets: Array<{
+      /** Pulsify's local ad group id. Null for a campaign-level exclusion. */
+      adGroupLocalId: string;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      /** Pulsify's local campaign id. Every exclusion belongs to a campaign. */
+      campaignLocalId: string;
+      /** Currency of the advertising profile. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      /** Amazon's targetLevel: AD_GROUP or CAMPAIGN. */
+      level: string;
+      matchType: string;
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      state: string;
+      targetId: number;
+      /** Amazon targeting category: keyword, product or product_category. */
+      targetType: string;
+      /** The excluded keyword or product expression. Named text here and expression in the Ads API. */
+      text: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Target";
+    }>;
     /** Amazon's advertising profile id. */
     profileId: number;
     state: string;
     targetingType: string;
-    /** All targeting categories, including keywords, automatic and product targets. */
+    /** Every positive targeting category: keywords, automatic and product targets. Exclusions are in negativeTargets. */
     targets: Array<{
       adGroupLocalId: string;
       /** Pulsify's local advertising profile id. */
@@ -538,7 +644,7 @@ export interface CampaignContext {
     hour: string;
     impressions: number;
   }>;
-  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
+  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. A creation targets the authorized parent: create_campaign an entry of advertisingProfiles, create_ad_group a campaign, create_ad an ad group, create_target an ad group or, for an exclusion, a campaign. Its payload is Amazon's native create object; Pulsify derives adProduct and the parent ID. Nothing is returned synchronously: a later run reads the parent's mutations[].created and targets it. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
   mutations: MutationRequest[];
   store: {
     /** Removes a key immediately. */
@@ -558,6 +664,22 @@ export interface PortfolioContext {
     id: string;
     name: string;
   };
+  /** The advertising profiles create_campaign may target: on a listing, the account's profiles in the listing's marketplace; on a campaign or portfolio, its own profile. Empty when the account has no Ads connection there. */
+  advertisingProfiles: Array<{
+    /** Two-letter country of the profile's marketplace. A new campaign's countries and marketplaces, when given, must name only this. */
+    countryCode: string;
+    /** Currency of every budget and bid under this profile. Native Ads money uses major units. */
+    currencyCode: string;
+    /** Pulsify's local advertising profile id. With type, it names this profile as a mutation target. */
+    id: string;
+    marketplaceId: string;
+    /** Campaign creations requested on this profile: every queued, submitting and uncertain request, plus the latest settled receipt of each attempted creation. Read created for the new campaign. */
+    mutations: MutationSummary[];
+    /** Amazon's advertising profile id. */
+    profileId: number;
+    /** Explicit mutation target type. Use this object as the target of create_campaign. */
+    type: "AdvertisingProfile";
+  }>;
   budget: {
     /** The budget figure carried by the firing event, not the campaign's current budget. Null outside budget-usage events. Major units. */
     amount: number;
@@ -568,7 +690,7 @@ export interface PortfolioContext {
     /** Percentage of budget consumed, 0-100. Amazon emits one per 5% increment. Null outside budget-usage events. */
     usagePercentage: number;
   };
-  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
+  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. A creation targets the authorized parent: create_campaign an entry of advertisingProfiles, create_ad_group a campaign, create_ad an ad group, create_target an ad group or, for an exclusion, a campaign. Its payload is Amazon's native create object; Pulsify derives adProduct and the parent ID. Nothing is returned synchronously: a later run reads the parent's mutations[].created and targets it. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
   mutations: MutationRequest[];
   /** Present instead of context.campaign when a portfolio budget crosses an increment. Check budget.scopeType, or the presence of this object, before reading context.campaign. */
   portfolio: {
@@ -605,6 +727,22 @@ export interface MetricsContext {
     id: string;
     name: string;
   };
+  /** The advertising profiles create_campaign may target: on a listing, the account's profiles in the listing's marketplace; on a campaign or portfolio, its own profile. Empty when the account has no Ads connection there. */
+  advertisingProfiles: Array<{
+    /** Two-letter country of the profile's marketplace. A new campaign's countries and marketplaces, when given, must name only this. */
+    countryCode: string;
+    /** Currency of every budget and bid under this profile. Native Ads money uses major units. */
+    currencyCode: string;
+    /** Pulsify's local advertising profile id. With type, it names this profile as a mutation target. */
+    id: string;
+    marketplaceId: string;
+    /** Campaign creations requested on this profile: every queued, submitting and uncertain request, plus the latest settled receipt of each attempted creation. Read created for the new campaign. */
+    mutations: MutationSummary[];
+    /** Amazon's advertising profile id. */
+    profileId: number;
+    /** Explicit mutation target type. Use this object as the target of create_campaign. */
+    type: "AdvertisingProfile";
+  }>;
   budget: {
     /** The budget figure carried by the firing event, not the campaign's current budget. Null outside budget-usage events. Major units. */
     amount: number | null;
@@ -737,11 +875,40 @@ export interface MetricsContext {
     /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
     mutations: MutationSummary[];
     name: string;
+    /** Exclusions: negative keywords and negative product targets, at ad-group and campaign level. Kept apart from targets and keywords because nothing bids on them and Amazon reports no performance for them, so they carry no bid and no metrics30. Update and archive them like any target. */
+    negativeTargets: Array<{
+      /** Pulsify's local ad group id. Null for a campaign-level exclusion. */
+      adGroupLocalId: string;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      /** Pulsify's local campaign id. Every exclusion belongs to a campaign. */
+      campaignLocalId: string;
+      /** Currency of the advertising profile. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      /** Amazon's targetLevel: AD_GROUP or CAMPAIGN. */
+      level: string;
+      matchType: string;
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      state: string;
+      targetId: number;
+      /** Amazon targeting category: keyword, product or product_category. */
+      targetType: string;
+      /** The excluded keyword or product expression. Named text here and expression in the Ads API. */
+      text: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Target";
+    }>;
     /** Amazon's advertising profile id. */
     profileId: number;
     state: string;
     targetingType: string;
-    /** All targeting categories, including keywords, automatic and product targets. */
+    /** Every positive targeting category: keywords, automatic and product targets. Exclusions are in negativeTargets. */
     targets: Array<{
       adGroupLocalId: string;
       /** Pulsify's local advertising profile id. */
@@ -797,7 +964,7 @@ export interface MetricsContext {
     sales: number;
     unitsOrdered: number;
   };
-  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
+  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. A creation targets the authorized parent: create_campaign an entry of advertisingProfiles, create_ad_group a campaign, create_ad an ad group, create_target an ad group or, for an exclusion, a campaign. Its payload is Amazon's native create object; Pulsify derives adProduct and the parent ID. Nothing is returned synchronously: a later run reads the parent's mutations[].created and targets it. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
   mutations: MutationRequest[];
   store: {
     /** Removes a key immediately. */
@@ -817,6 +984,22 @@ export interface ChangeContext {
     id: string;
     name: string;
   };
+  /** The advertising profiles create_campaign may target: on a listing, the account's profiles in the listing's marketplace; on a campaign or portfolio, its own profile. Empty when the account has no Ads connection there. */
+  advertisingProfiles: Array<{
+    /** Two-letter country of the profile's marketplace. A new campaign's countries and marketplaces, when given, must name only this. */
+    countryCode: string;
+    /** Currency of every budget and bid under this profile. Native Ads money uses major units. */
+    currencyCode: string;
+    /** Pulsify's local advertising profile id. With type, it names this profile as a mutation target. */
+    id: string;
+    marketplaceId: string;
+    /** Campaign creations requested on this profile: every queued, submitting and uncertain request, plus the latest settled receipt of each attempted creation. Read created for the new campaign. */
+    mutations: MutationSummary[];
+    /** Amazon's advertising profile id. */
+    profileId: number;
+    /** Explicit mutation target type. Use this object as the target of create_campaign. */
+    type: "AdvertisingProfile";
+  }>;
   budget: {
     /** The budget figure carried by the firing event, not the campaign's current budget. Null outside budget-usage events. Major units. */
     amount: number | null;
@@ -949,11 +1132,40 @@ export interface ChangeContext {
     /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
     mutations: MutationSummary[];
     name: string;
+    /** Exclusions: negative keywords and negative product targets, at ad-group and campaign level. Kept apart from targets and keywords because nothing bids on them and Amazon reports no performance for them, so they carry no bid and no metrics30. Update and archive them like any target. */
+    negativeTargets: Array<{
+      /** Pulsify's local ad group id. Null for a campaign-level exclusion. */
+      adGroupLocalId: string;
+      /** Pulsify's local advertising profile id. */
+      advertisingProfileId: string;
+      /** Pulsify's local campaign id. Every exclusion belongs to a campaign. */
+      campaignLocalId: string;
+      /** Currency of the advertising profile. */
+      currencyCode: string;
+      /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+      data: Record<string, unknown>;
+      id: string;
+      /** Amazon's targetLevel: AD_GROUP or CAMPAIGN. */
+      level: string;
+      matchType: string;
+      /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+      mutations: MutationSummary[];
+      /** Amazon's advertising profile id. */
+      profileId: number;
+      state: string;
+      targetId: number;
+      /** Amazon targeting category: keyword, product or product_category. */
+      targetType: string;
+      /** The excluded keyword or product expression. Named text here and expression in the Ads API. */
+      text: string;
+      /** Explicit mutation target type. Use this object as the mutation target. */
+      type: "Target";
+    }>;
     /** Amazon's advertising profile id. */
     profileId: number;
     state: string;
     targetingType: string;
-    /** All targeting categories, including keywords, automatic and product targets. */
+    /** Every positive targeting category: keywords, automatic and product targets. Exclusions are in negativeTargets. */
     targets: Array<{
       adGroupLocalId: string;
       /** Pulsify's local advertising profile id. */
@@ -1007,7 +1219,7 @@ export interface ChangeContext {
   };
   hourlyConversions: unknown;
   hourlyTraffic: unknown;
-  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
+  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. A creation targets the authorized parent: create_campaign an entry of advertisingProfiles, create_ad_group a campaign, create_ad an ad group, create_target an ad group or, for an exclusion, a campaign. Its payload is Amazon's native create object; Pulsify derives adProduct and the parent ID. Nothing is returned synchronously: a later run reads the parent's mutations[].created and targets it. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
   mutations: MutationRequest[];
   store: {
     /** Removes a key immediately. */
