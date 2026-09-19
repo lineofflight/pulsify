@@ -187,6 +187,20 @@ export interface ListingContext {
     currencyCode: string;
     /** Raw Amazon source snapshots, with original keys and units. Contents vary with the sources received; missing sources are absent. FBA report stock is under data.fba.inventory (afn-fulfillable-quantity, afn-inbound-shipped-quantity, etc.). Submitted MFN stock is under data.listings_item.attributes.fulfillment_availability; observed availability is under data.listings_item.fulfillmentAvailability. data.notifications holds the latest accepted envelope of each type, including EventTime. Notifications do not overwrite report or crawl snapshots. Choose the source and stock measure your automation needs. */
     data: Record<string, unknown>;
+    /** Coupons and promotions covering this listing's ASIN whose dates include now, as of dealsReportedAt. Null until both the coupon and promotion reports have synced, so null means unknown, not none. An empty array means both synced and nothing is active. A deal that started and ended between syncs never appears. */
+    deals: Array<{
+      /** Amazon's report entry with its keys unchanged. A coupon carries its budget and redemption totals; a promotion carries status, type and per-ASIN sales. asins or includedProducts keeps only this listing's ASIN. Totals are cumulative through the day before the last sync. Read status yourself: dates alone do not say whether Amazon cancelled a promotion. */
+      data: Record<string, unknown>;
+      /** ISO 8601, UTC. A deal counts as active while startsAt <= now < endsAt, but Amazon can end one earlier (a budget runs out, or it is cancelled) before the next sync. */
+      endsAt: string;
+      id: string;
+      kind: string;
+      /** ISO 8601, UTC. When this deal's own totals in data were last refreshed from Amazon's report. A deal that started long ago in an older quarter refreshes less often than dealsReportedAt, so read this to judge how current its totals are. */
+      reportedAt: string;
+      startsAt: string;
+    }> | null;
+    /** ISO 8601 time when both reports last synced (the older of the two types' latest downloads). A deal missing from deals is missing as of this time. It does not say how current each deal's totals are: read the deal's own reportedAt. Null while deals is null. */
+    dealsReportedAt: string | null;
     /** Null while statuses is null. Do not read a null as false. */
     deleted: boolean | null;
     /** Null while statuses is null. Do not read a null as false. */
@@ -502,6 +516,20 @@ export interface CampaignContext {
     currencyCode: string;
     /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
     data: Record<string, unknown>;
+    /** Coupons and promotions covering any ASIN this campaign advertises, across the account's inventories in the profile's marketplace, whose dates include now, as of dealsReportedAt. Null until both reports have synced for every such inventory, so null means unknown, not none. */
+    deals: Array<{
+      /** Amazon's report entry with its keys unchanged, trimmed to the ASINs this campaign advertises. Read status yourself: dates alone do not say whether Amazon cancelled a promotion. */
+      data: Record<string, unknown>;
+      /** ISO 8601, UTC. A deal counts as active while startsAt <= now < endsAt, but Amazon can end one earlier before the next sync. */
+      endsAt: string;
+      id: string;
+      kind: string;
+      /** ISO 8601, UTC. When this deal's own totals in data were last refreshed from Amazon's report. A deal that started long ago in an older quarter refreshes less often than dealsReportedAt, so read this to judge how current its totals are. */
+      reportedAt: string;
+      startsAt: string;
+    }> | null;
+    /** ISO 8601 time when both reports last synced (the oldest of the two types' latest downloads across the matching inventories). A deal missing from deals is missing as of this time. It does not say how current each deal's totals are: read the deal's own reportedAt. Null while deals is null. */
+    dealsReportedAt: string | null;
     /** Pulsify's own id. Null when the changed campaign has not been synced yet. */
     id: string;
     keywords: Array<{
@@ -821,6 +849,20 @@ export interface MetricsContext {
     currencyCode: string;
     /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
     data: Record<string, unknown>;
+    /** Coupons and promotions covering any ASIN this campaign advertises, across the account's inventories in the profile's marketplace, whose dates include now, as of dealsReportedAt. Null until both reports have synced for every such inventory, so null means unknown, not none. */
+    deals: Array<{
+      /** Amazon's report entry with its keys unchanged, trimmed to the ASINs this campaign advertises. Read status yourself: dates alone do not say whether Amazon cancelled a promotion. */
+      data: Record<string, unknown>;
+      /** ISO 8601, UTC. A deal counts as active while startsAt <= now < endsAt, but Amazon can end one earlier before the next sync. */
+      endsAt: string;
+      id: string;
+      kind: string;
+      /** ISO 8601, UTC. When this deal's own totals in data were last refreshed from Amazon's report. A deal that started long ago in an older quarter refreshes less often than dealsReportedAt, so read this to judge how current its totals are. */
+      reportedAt: string;
+      startsAt: string;
+    }> | null;
+    /** ISO 8601 time when both reports last synced (the oldest of the two types' latest downloads across the matching inventories). A deal missing from deals is missing as of this time. It does not say how current each deal's totals are: read the deal's own reportedAt. Null while deals is null. */
+    dealsReportedAt: string | null;
     /** Pulsify's own id. Null when the changed campaign has not been synced yet. */
     id: string;
     keywords: Array<{
@@ -1078,6 +1120,20 @@ export interface ChangeContext {
     currencyCode: string;
     /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
     data: Record<string, unknown>;
+    /** Coupons and promotions covering any ASIN this campaign advertises, across the account's inventories in the profile's marketplace, whose dates include now, as of dealsReportedAt. Null until both reports have synced for every such inventory, so null means unknown, not none. */
+    deals: Array<{
+      /** Amazon's report entry with its keys unchanged, trimmed to the ASINs this campaign advertises. Read status yourself: dates alone do not say whether Amazon cancelled a promotion. */
+      data: Record<string, unknown>;
+      /** ISO 8601, UTC. A deal counts as active while startsAt <= now < endsAt, but Amazon can end one earlier before the next sync. */
+      endsAt: string;
+      id: string;
+      kind: string;
+      /** ISO 8601, UTC. When this deal's own totals in data were last refreshed from Amazon's report. A deal that started long ago in an older quarter refreshes less often than dealsReportedAt, so read this to judge how current its totals are. */
+      reportedAt: string;
+      startsAt: string;
+    }> | null;
+    /** ISO 8601 time when both reports last synced (the oldest of the two types' latest downloads across the matching inventories). A deal missing from deals is missing as of this time. It does not say how current each deal's totals are: read the deal's own reportedAt. Null while deals is null. */
+    dealsReportedAt: string | null;
     /** Pulsify's own id. Null when the changed campaign has not been synced yet. */
     id: string;
     keywords: Array<{

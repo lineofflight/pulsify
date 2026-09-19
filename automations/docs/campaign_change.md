@@ -144,6 +144,14 @@ Projected currency values on context are in major units (15.27). Raw data snapsh
 | `campaign.campaignId` | number | no |  |
 | `campaign.currencyCode` | string | no | Currency of the listing marketplace or advertising profile. Native Ads money uses major units. |
 | `campaign.data` | object | no | Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. |
+| `campaign.deals` | array | yes | Coupons and promotions covering any ASIN this campaign advertises, across the account's inventories in the profile's marketplace, whose dates include now, as of dealsReportedAt. Null until both reports have synced for every such inventory, so null means unknown, not none. |
+| `campaign.dealsReportedAt` | string | yes | ISO 8601 time when both reports last synced (the oldest of the two types' latest downloads across the matching inventories). A deal missing from deals is missing as of this time. It does not say how current each deal's totals are: read the deal's own reportedAt. Null while deals is null. |
+| `campaign.deals[].data` | object | no | Amazon's report entry with its keys unchanged, trimmed to the ASINs this campaign advertises. Read status yourself: dates alone do not say whether Amazon cancelled a promotion. |
+| `campaign.deals[].endsAt` | string | no | ISO 8601, UTC. A deal counts as active while startsAt <= now < endsAt, but Amazon can end one earlier before the next sync. |
+| `campaign.deals[].id` | string | no |  |
+| `campaign.deals[].kind` | string | no |  |
+| `campaign.deals[].reportedAt` | string | no | ISO 8601, UTC. When this deal's own totals in data were last refreshed from Amazon's report. A deal that started long ago in an older quarter refreshes less often than dealsReportedAt, so read this to judge how current its totals are. |
+| `campaign.deals[].startsAt` | string | no |  |
 | `campaign.id` | string | no | Pulsify's own id. Null when the changed campaign has not been synced yet. |
 | `campaign.keywords` | array | no |  |
 | `campaign.keywords[].adGroupLocalId` | string | no |  |

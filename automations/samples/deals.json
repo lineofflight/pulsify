@@ -1,0 +1,61 @@
+{
+  "reported_at": "2026-06-06T04:00:00Z",
+  "items": [
+    {
+      "kind": "coupon",
+      "id": "1234567890",
+      "startsAt": "2026-06-01T07:00:00Z",
+      "endsAt": "2026-06-30T06:59:59Z",
+      "reportedAt": "2026-06-06T04:00:00Z",
+      "data": {
+        "couponId": "1234567890",
+        "name": "Sample coupon",
+        "websiteMessage": "Save 10%",
+        "marketplaceId": "ATVPDKIKX0DER",
+        "startDateTime": "2026-06-01T07:00:00Z",
+        "endDateTime": "2026-06-30T06:59:59Z",
+        "customerSegment": "ALL_CUSTOMERS",
+        "discountType": "PERCENT_OFF_LIST_PRICE",
+        "discountAmount": 10.0,
+        "clips": 120,
+        "redemptions": 45,
+        "totalDiscount": 89.55,
+        "sales": 805.95,
+        "budget": 200.0,
+        "budgetSpent": 96.3,
+        "budgetRemaining": 103.7,
+        "budgetPercentageUsed": 48.15,
+        "currencyCode": "USD",
+        "asins": [{ "asin": "B00EXAMPLE01" }]
+      }
+    },
+    {
+      "kind": "promotion",
+      "id": "PROMO-1",
+      "startsAt": "2026-06-05T07:00:00Z",
+      "endsAt": "2026-06-12T06:59:59Z",
+      "reportedAt": "2026-06-06T04:00:00Z",
+      "data": {
+        "promotionId": "PROMO-1",
+        "promotionName": "Sample Best Deal",
+        "marketplaceId": "ATVPDKIKX0DER",
+        "type": "BEST_DEAL",
+        "status": "APPROVED",
+        "startDateTime": "2026-06-05T07:00:00Z",
+        "endDateTime": "2026-06-12T06:59:59Z",
+        "unitsSold": 30,
+        "revenue": 450.0,
+        "revenueCurrencyCode": "USD",
+        "includedProducts": [
+          {
+            "asin": "B00EXAMPLE01",
+            "productName": "Sample product",
+            "productUnitsSold": 20,
+            "productRevenue": 300.0,
+            "productRevenueCurrencyCode": "USD"
+          }
+        ]
+      }
+    }
+  ]
+}
