@@ -4,7 +4,7 @@
 
 Listing status changes, including buyability transitions and suppressions.
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#listings_item_status_change)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#listings_item_status_change)
 
 ## Default template
 

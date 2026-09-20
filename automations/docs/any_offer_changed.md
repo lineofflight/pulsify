@@ -4,7 +4,7 @@
 
 Changes to the top 20 offers, Buy Box, or external prices for items you sell.
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#any_offer_changed)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#any_offer_changed)
 
 ## Default template
 

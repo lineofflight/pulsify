@@ -4,7 +4,7 @@
 
 An ad is created or changes (state), in near real time.
 
-[Amazon's documentation](https://advertising.amazon.com/API/docs/en-us/amazon-marketing-stream/data-guide)
+[Amazon documentation](https://advertising.amazon.com/API/docs/en-us/amazon-marketing-stream/data-guide)
 
 ## Default template
 

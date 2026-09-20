@@ -4,7 +4,7 @@
 
 An ad group is created or changes (state, name, default bid), in near real time.
 
-[Amazon's documentation](https://advertising.amazon.com/API/docs/en-us/amazon-marketing-stream/data-guide)
+[Amazon documentation](https://advertising.amazon.com/API/docs/en-us/amazon-marketing-stream/data-guide)
 
 ## Default template
 

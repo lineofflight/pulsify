@@ -1,0 +1,18 @@
+{
+  "type": "ADS_REPORT_COMPLETED",
+  "mutationId": "sample-report",
+  "occurredAt": "2026-09-20T12:00:00Z",
+  "result": {
+    "state": "completed",
+    "providerStatus": "DONE",
+    "providerJobId": "sample-provider-report",
+    "settledAt": "2026-09-20T12:00:00Z",
+    "ingestionStatus": "completed"
+  },
+  "operation": "amazon_ads:reporting:3.0:createAsyncReport",
+  "kind": "ads_report",
+  "artifacts": [],
+  "automation": null,
+  "parentMutationId": null,
+  "nextPageAvailable": false
+}

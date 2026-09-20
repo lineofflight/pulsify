@@ -4,7 +4,7 @@
 
 Order created, updated, or cancelled, enabling order-driven automations.
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#order_change)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#order_change)
 
 ## Default template
 

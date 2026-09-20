@@ -4,7 +4,7 @@
 
 Hourly ordered units and revenue per ASIN. Requires Brand Analytics..
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#item_sales_event_change)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#item_sales_event_change)
 
 ## Default template
 

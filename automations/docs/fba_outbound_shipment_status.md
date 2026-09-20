@@ -4,7 +4,7 @@
 
 FBA outbound shipments transition to a notable lifecycle state (e.g. Shipped, Cancelled).
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#fba_outbound_shipment_status)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#fba_outbound_shipment_status)
 
 ## Default template
 

@@ -4,7 +4,7 @@
 
 Detail page content changes (title, bullets, description, images) for brand-owned ASINs. Brand protection and listing hijack detection..
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#branded_item_content_change)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#branded_item_content_change)
 
 ## Default template
 

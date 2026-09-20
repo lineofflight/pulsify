@@ -4,7 +4,7 @@
 
 B2B offer changes for items you sell, including quantity discount pricing.
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#b2b_any_offer_changed)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#b2b_any_offer_changed)
 
 ## Default template
 

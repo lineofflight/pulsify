@@ -4,7 +4,7 @@
 
 DataKiosk query has finished processing with results ready to download.
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#data_kiosk_query_processing_finished)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#data_kiosk_query_processing_finished)
 
 ## Default template
 

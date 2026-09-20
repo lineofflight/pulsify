@@ -4,7 +4,7 @@
 
 FBA stock level changes across all marketplaces in a region.
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#fba_inventory_availability_changes)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#fba_inventory_availability_changes)
 
 ## Default template
 

@@ -4,7 +4,7 @@
 
 Feed submissions reach a terminal state (DONE, CANCELLED, FATAL).
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#feed_processing_finished)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#feed_processing_finished)
 
 ## Default template
 

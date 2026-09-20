@@ -5,7 +5,8 @@
 // receives.
 
 export type AdsTargetType = "Campaign" | "AdGroup" | "Ad" | "Target";
-export type MutationTargetType = "Listing" | "AdvertisingProfile" | AdsTargetType;
+export type MutationTargetType = "Listing" | "Inventory" | "SellingPartner" | "AdvertisingProfile" |
+  "AmazonResource" | AdsTargetType;
 export interface MutationTarget<T extends MutationTargetType> { type: T; id: string }
 /** Native Sponsored Products update or create object. Discover fields with get_mutation_schema. */
 export type NativeAdsPayload = Record<string, unknown>;
@@ -14,7 +15,21 @@ export interface ListingPatch {
   path: string;
   value?: unknown[];
 }
+/** Save these pins with create_automation/update_automation, outside the handler code. */
+export type OperationDependencies = Record<string, { catalog_revision: string; schema_digest: string }>;
+export type QualifiedOperation = `sp_api:${string}` | `amazon_ads:${string}`;
+export interface AutomationProvenance {
+  automationId: string | null;
+  executionDigest: string;
+  eventId: string | null;
+  deliveryId: string | null;
+  outputIndex: number;
+  rootEventId: string | null;
+  parentMutationId: string | null;
+  completionDepth: number;
+}
 export type MutationRequest =
+  | { target: MutationTarget<MutationTargetType>; action: QualifiedOperation; payload: Record<string, unknown> }
   | {
       target: MutationTarget<"Listing">;
       action: "update";
@@ -37,7 +52,7 @@ export interface MutationSummary {
   id: string;
   targetType: MutationTargetType;
   targetId: string;
-  action: "update" | "archive" | CreationAction;
+  action: "update" | "archive" | CreationAction | QualifiedOperation;
   /** Pending while queued, submitting or uncertain. Every other status is final. */
   status: "queued" | "submitting" | "submitted" | "blocked" | "uncertain" | "unresolved";
   outcome: string | null;
@@ -53,6 +68,7 @@ export interface MutationSummary {
   created: (MutationTarget<AdsTargetType> & { id: string | null; providerId: string }) | null;
   /** What reconciliation established for a creation whose reply was lost. */
   reconciliation: Record<string, unknown>;
+  automation: AutomationProvenance | null;
 }
 
 export interface ListingContext {
@@ -1289,17 +1305,266 @@ export interface ChangeContext {
   webhooks: Record<string, { post(payload: unknown): void }>;
 }
 
+export interface ReportContext {
+  /** Which connected account the automation runs for. Absent on validation runs and plain samples; present on live runs and dry runs. */
+  account: {
+    id: string;
+    name: string;
+  };
+  /** The advertising profiles create_campaign may target: on a listing, the account's profiles in the listing's marketplace; on a campaign or portfolio, its own profile. Empty when the account has no Ads connection there. */
+  advertisingProfiles: Array<{
+    /** Two-letter country of the profile's marketplace. A new campaign's countries and marketplaces, when given, must name only this. */
+    countryCode: string | null;
+    /** Currency of every budget and bid under this profile. Native Ads money uses major units. */
+    currencyCode: string | null;
+    /** Pulsify's local advertising profile id. With type, it names this profile as a mutation target. */
+    id: string;
+    marketplaceId: string | null;
+    /** Campaign creations requested on this profile: every queued, submitting and uncertain request, plus the latest settled receipt of each attempted creation. Read created for the new campaign. */
+    mutations: MutationSummary[];
+    /** Amazon's advertising profile id. */
+    profileId: number | null;
+    /** Explicit mutation target type. Use this object as the target of create_campaign. */
+    type: "AdvertisingProfile";
+  }>;
+  /** Observed campaigns from authorized profiles in the same account and marketplaces. */
+  campaigns: Array<{
+    adProduct: string | null;
+    /** Pulsify's local advertising profile id. */
+    advertisingProfileId: string | null;
+    /** Distinct ASINs advertised in the campaign, not just this listing's. */
+    asinCount: number;
+    /** Daily budget in major units, and a decimal string rather than a number ("50.0"). parseFloat before comparing. Major units. */
+    budget: string | null;
+    campaignId: number | null;
+    /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+    currencyCode: string | null;
+    /** Native Amazon entity, preserving original keys, values and units. Read get_mutation_schema for writable fields. */
+    data: Record<string, unknown>;
+    id: string;
+    metrics30: {
+      /** cost / sales over the trailing 30 days. Null when sales is zero. */
+      acos: number | null;
+      clicks: number;
+      /** Spend over the trailing 30 days. Major units. */
+      cost: number;
+      impressions: number;
+      /** sales / cost over the trailing 30 days. Null when cost is zero. */
+      roas: number | null;
+      /** Attributed sales over the trailing 30 days. Major units. */
+      sales: number;
+    };
+    /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+    mutations: MutationSummary[];
+    name: string | null;
+    /** Amazon's advertising profile id. */
+    profileId: number | null;
+    state: string | null;
+    targetingType: string | null;
+    /** Explicit mutation target type. Use this object as the mutation target. */
+    type: "Campaign";
+  }>;
+  /** Each collection selects up to 50 local rows, ordered by ID. returned and truncated describe local selection, not provider coverage. */
+  completeness: {
+    advertisingProfiles: {
+      returned: number;
+      truncated: boolean;
+    };
+    campaigns: {
+      returned: number;
+      truncated: boolean;
+    };
+    inventories: {
+      returned: number;
+      truncated: boolean;
+    };
+    listings: {
+      returned: number;
+      truncated: boolean;
+    };
+  };
+  /** The source receipt's connection and admitted marketplaces. Companion observations are restricted to the same account. */
+  connection: {
+    id: string;
+    marketplaceIds: Array<string>;
+    type: string;
+  };
+  /** Authorized inventories in scope. Vendor contexts may have none. */
+  inventories: Array<{
+    id: string;
+    marketplaceId: string;
+    type: "Inventory";
+  }>;
+  /** Observed listings in scope, with native data and current receipts. Nested Ads collections are empty; use context.campaigns and context.advertisingProfiles. A bounded selection may be truncated. */
+  listings: Array<{
+    adGroups: unknown;
+    ads: unknown;
+    asin: string;
+    /** Null when the listing has no B2B offer. Major units. */
+    b2bPrice: number | null;
+    /** Trailing 30 days, rolled up eagerly. Always a number: zero rather than absent with no B2B sales. */
+    b2bUnitsSold: number;
+    blocked: boolean;
+    /** Null while statuses is null. Do not read a null as false. */
+    buyable: boolean | null;
+    campaigns: unknown;
+    /** Upper price bound as Amazon last reported it. Null when unset. Same lifecycle as floor. Major units. */
+    ceiling: number | null;
+    /** Family of conditionType: new, used, collectible, refurbished or club. Null until Amazon reports it. */
+    condition: string | null;
+    /** Amazon's full condition token, such as used_very_good. Null until the listing item reports it. */
+    conditionType: string | null;
+    /** Currency of the listing marketplace or advertising profile. Native Ads money uses major units. */
+    currencyCode: string;
+    /** Raw Amazon source snapshots, with original keys and units. Contents vary with the sources received; missing sources are absent. FBA report stock is under data.fba.inventory (afn-fulfillable-quantity, afn-inbound-shipped-quantity, etc.). Submitted MFN stock is under data.listings_item.attributes.fulfillment_availability; observed availability is under data.listings_item.fulfillmentAvailability. data.notifications holds the latest accepted envelope of each type, including EventTime. Notifications do not overwrite report or crawl snapshots. Choose the source and stock measure your automation needs. */
+    data: Record<string, unknown>;
+    /** Coupons and promotions covering this listing's ASIN whose dates include now, as of dealsReportedAt. Null until both the coupon and promotion reports have synced, so null means unknown, not none. An empty array means both synced and nothing is active. A deal that started and ended between syncs never appears. */
+    deals: Array<{
+      /** Amazon's report entry with its keys unchanged. A coupon carries its budget and redemption totals; a promotion carries status, type and per-ASIN sales. asins or includedProducts keeps only this listing's ASIN. Totals are cumulative through the day before the last sync. Read status yourself: dates alone do not say whether Amazon cancelled a promotion. */
+      data: Record<string, unknown>;
+      /** ISO 8601, UTC. A deal counts as active while startsAt <= now < endsAt, but Amazon can end one earlier (a budget runs out, or it is cancelled) before the next sync. */
+      endsAt: string;
+      id: string;
+      kind: string;
+      /** ISO 8601, UTC. When this deal's own totals in data were last refreshed from Amazon's report. A deal that started long ago in an older quarter refreshes less often than dealsReportedAt, so read this to judge how current its totals are. */
+      reportedAt: string;
+      startsAt: string;
+    }> | null;
+    /** ISO 8601 time when both reports last synced (the older of the two types' latest downloads). A deal missing from deals is missing as of this time. It does not say how current each deal's totals are: read the deal's own reportedAt. Null while deals is null. */
+    dealsReportedAt: string | null;
+    /** Null while statuses is null. Do not read a null as false. */
+    deleted: boolean | null;
+    /** Null while statuses is null. Do not read a null as false. */
+    discoverable: boolean | null;
+    /** FBA inventory and planning report data, camelCased from Amazon's hyphenated report columns. Null for MFN listings. Keys vary by report, so treat anything below it as optional. */
+    fba: {
+      /** Unit counts per age bucket, as decimal strings. */
+      agedInventory: {
+        invAge0To90Days: string;
+        invAge181To270Days: string;
+        invAge271To365Days: string;
+        invAge365PlusDays: string;
+        invAge91To180Days: string;
+      };
+      /** Quantities arrive as decimal strings, not numbers. parseInt before arithmetic. */
+      inventory: {
+        afnFulfillableQuantity: string;
+        afnInboundShippedQuantity: string;
+        afnResearchingQuantity: string;
+        afnReservedQuantity: string;
+        afnTotalQuantity: string;
+        afnUnsellableQuantity: string;
+        afnWarehouseQuantity: string;
+      };
+      /** Restock planning figures, as decimal strings. */
+      planning: {
+        available: string;
+        estimatedExcessQuantity: string;
+        sellThrough: string;
+        unitsShippedT90: string;
+        weeksOfCoverT90: string;
+      };
+    } | null;
+    /** Fulfillment-centre report data. Null when no report has landed. Keys vary by report. */
+    fc: {
+      shelfLife: {
+        unit: string;
+        value: number;
+      };
+    } | null;
+    /** Lower price bound as Amazon last reported it. Null when unset. A bound you set goes to Amazon and shows here once Amazon's next reading reflects it; until then list_listings lists it under mutations. Major units. */
+    floor: number | null;
+    /** Either "Amazon" (FBA) or "Merchant" (MFN). Never null. */
+    fulfillmentChannel: string;
+    /** Business days from order to ship (Amazon's lead_time_to_ship_max_days). Null when the SKU uses the account's default handling time. Writable on listings you fulfil yourself. A write queues only the requested handling time; it does not resend observed stock. */
+    handlingTime: number | null;
+    id: string;
+    keywords: unknown;
+    /** All queued, submitting and uncertain requests plus the latest terminal receipt. Acceptance is not an observed result. */
+    mutations: MutationSummary[];
+    /** Exclusions: negative keywords and negative product targets, at ad-group and campaign level. Kept apart from targets and keywords because nothing bids on them and Amazon reports no performance for them, so they carry no bid and no metrics30. Update and archive them like any target. */
+    negativeTargets: unknown;
+    /** Major units (15.27). list_listings reports the same figure as 1527. Major units. */
+    price: number | null;
+    /** Amazon product type for native listing patches. Use PRODUCT when absent. */
+    productType: string | null;
+    /** YYYY-MM-DD the listing is back in stock. Null when unset. Writable on listings you fulfil yourself. */
+    restockDate: string | null;
+    /** Zero when Amazon fulfils. On a listing you fulfil, null until an offer event carries your own offer; Pulsify no longer polls for it. Major units. */
+    shipping: number | null;
+    /** Merchant shipping template id, not its display name. Null until Amazon reports one; FBA listings have none. Writable on listings you fulfil yourself. */
+    shippingGroup: string | null;
+    /** One of "BUYABLE", "DISCOVERABLE", "DELETED". */
+    statuses: Array<string>;
+    /** Every positive targeting category: keywords, automatic and product targets. Exclusions are in negativeTargets. */
+    targets: unknown;
+    /** Explicit mutation target type. Use this object as the mutation target. */
+    type: "Listing";
+  }>;
+  /** Mutation outbox array, drained after handle returns. Each entry is exactly { target, action, payload }. Targets carry explicit type and local id. Use context.listing, context.campaign, or their campaigns, adGroups, ads, targets or keywords arrays. Listing update payloads contain productType and a non-empty native patches array. Ads update payloads are native Sponsored Products objects; archive uses an empty payload. A creation targets the authorized parent: create_campaign an entry of advertisingProfiles, create_ad_group a campaign, create_ad an ad group, create_target an ad group or, for an exclusion, a campaign. Its payload is Amazon's native create object; Pulsify derives adProduct and the parent ID. Nothing is returned synchronously: a later run reads the parent's mutations[].created and targets it. Listing and advertising events share this contract. Use get_mutation_schema for the native schema. At most 50 requests and 100000 serialized payload bytes per run. */
+  mutations: MutationRequest[];
+  /** Finalized receipt metadata. Provider completion, artifact transfer and ingestion are separate outcomes. */
+  report: {
+    artifacts: Array<{
+      /** Verified byte count. Null until artifact transfer succeeds. */
+      byteSize: number | null;
+      charset: string;
+      /** Verified media type. Null until artifact transfer succeeds. */
+      contentType: string | null;
+      errorCode: string | null;
+      /** Artifact expiry. Null until artifact transfer succeeds. */
+      expiresAt: string | null;
+      id: string;
+      kind: string;
+      /** Verified checksum. Null until artifact transfer succeeds. */
+      sha256: string | null;
+      state: string;
+    }>;
+    /** Server-owned execution digest and root, parent, event, delivery and output correlation, when automation-originated. */
+    automation: AutomationProvenance | null;
+    errorCode: string | null;
+    /** Scheduled ingestion status. Customer-requested artifacts are never imported automatically. */
+    ingestionStatus: string | null;
+    kind: string;
+    mutationId: string;
+    /** This page has a continuation; completion does not imply the full query is complete. No token is exposed. */
+    nextPageAvailable: boolean;
+    /** Qualified operation name. Null for adopted requests whose original payload was not retained. */
+    operation: string | null;
+    /** Previous page's receipt when this request follows a query continuation. */
+    parentMutationId: string | null;
+    providerJobId: string | null;
+    /** Amazon's terminal status, distinct from local ingestion status. */
+    providerStatus: string | null;
+    settledAt: string;
+    state: string;
+    transferErrorCode: string | null;
+  };
+  store: {
+    /** Removes a key immediately. */
+    delete(key: string): void;
+    /** Per-automation key/value store. Returns null for a missing key. Values expire after 1 day. */
+    get(key: string): unknown;
+    /** Persists a JSON-serializable value under a key for 1 day. */
+    set(key: string, value: unknown): void;
+  };
+  /** One entry per enabled webhook on the account, keyed by name. Call webhooks.<name>.post(payload); a string payload is wrapped as { text: ... }. Empty when the account has none. */
+  webhooks: Record<string, { post(payload: unknown): void }>;
+}
+
 export type AutomationContext =
   | ListingContext
   | SellerContext
   | CampaignContext
   | PortfolioContext
   | MetricsContext
-  | ChangeContext;
+  | ChangeContext
+  | ReportContext;
 
 /** The context interface each stream type's handler receives. */
 export interface StreamTypeContexts {
   ACCOUNT_STATUS_CHANGED: SellerContext;
+  ADS_REPORT_COMPLETED: ReportContext;
   AD_CHANGE: ChangeContext;
   AD_GROUP_CHANGE: ChangeContext;
   ANY_OFFER_CHANGED: ListingContext;
@@ -1320,6 +1585,7 @@ export interface StreamTypeContexts {
   ORDER_CHANGE: ListingContext;
   PRICING_HEALTH: ListingContext;
   REPORT_PROCESSING_FINISHED: ListingContext;
+  SELLING_REPORT_COMPLETED: ReportContext;
   SP_CONVERSION: MetricsContext;
   SP_TRAFFIC: MetricsContext;
   TARGET_CHANGE: ChangeContext;
@@ -1328,4 +1594,4 @@ export interface StreamTypeContexts {
 export type AutomationHandler<C extends AutomationContext = AutomationContext> = (
   event: unknown,
   context: C,
-) => C;
+) => C | void;

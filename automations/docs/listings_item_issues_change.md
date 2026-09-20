@@ -4,7 +4,7 @@
 
 Listing issues are created, fixed, or updated.
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#listings_item_issues_change)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#listings_item_issues_change)
 
 ## Default template
 

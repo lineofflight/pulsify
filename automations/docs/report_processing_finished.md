@@ -4,7 +4,7 @@
 
 A report has finished processing and is ready to download.
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#report_processing_finished)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#report_processing_finished)
 
 ## Default template
 

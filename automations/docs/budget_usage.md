@@ -4,7 +4,7 @@
 
 A campaign or portfolio budget consumption crosses a 5% increment, in near real time.
 
-[Amazon's documentation](https://advertising.amazon.com/API/docs/en-us/amazon-marketing-stream/data-guide)
+[Amazon documentation](https://advertising.amazon.com/API/docs/en-us/amazon-marketing-stream/data-guide)
 
 ## Default template
 

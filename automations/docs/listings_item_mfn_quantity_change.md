@@ -4,7 +4,7 @@
 
 Available quantity changes for MFN listings from orders, inventory updates, or cancellations.
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#listings_item_mfn_quantity_change)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#listings_item_mfn_quantity_change)
 
 ## Default template
 

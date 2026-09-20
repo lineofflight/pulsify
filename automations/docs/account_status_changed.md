@@ -4,7 +4,7 @@
 
 Seller account health transitions (NORMAL, AT_RISK, DEACTIVATED).
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#account_status_changed)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#account_status_changed)
 
 ## Default template
 

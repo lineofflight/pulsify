@@ -4,7 +4,7 @@
 
 Multi-Channel Fulfillment orders transition between lifecycle states (e.g. Received, Processing, Complete, Cancelled).
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#fulfillment_order_status)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#fulfillment_order_status)
 
 ## Default template
 

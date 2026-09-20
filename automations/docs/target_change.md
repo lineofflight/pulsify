@@ -4,7 +4,7 @@
 
 A keyword or product target is created or changes (state, bid), in near real time.
 
-[Amazon's documentation](https://advertising.amazon.com/API/docs/en-us/amazon-marketing-stream/data-guide)
+[Amazon documentation](https://advertising.amazon.com/API/docs/en-us/amazon-marketing-stream/data-guide)
 
 ## Default template
 

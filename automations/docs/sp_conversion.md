@@ -4,7 +4,7 @@
 
 Hourly Sponsored Products attributed conversions and sales per campaign, ad group, ad, and keyword.
 
-[Amazon's documentation](https://advertising.amazon.com/API/docs/en-us/amazon-marketing-stream/data-guide)
+[Amazon documentation](https://advertising.amazon.com/API/docs/en-us/amazon-marketing-stream/data-guide)
 
 ## Default template
 

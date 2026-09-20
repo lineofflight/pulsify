@@ -4,7 +4,7 @@
 
 Your offer loses Buy Box eligibility due to uncompetitive pricing.
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#pricing_health)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#pricing_health)
 
 ## Default template
 

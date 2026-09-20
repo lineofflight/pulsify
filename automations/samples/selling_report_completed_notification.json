@@ -1,0 +1,18 @@
+{
+  "type": "SELLING_REPORT_COMPLETED",
+  "mutationId": "sample-report",
+  "occurredAt": "2026-09-20T12:00:00Z",
+  "result": {
+    "state": "completed",
+    "providerStatus": "DONE",
+    "providerJobId": "sample-provider-report",
+    "settledAt": "2026-09-20T12:00:00Z",
+    "ingestionStatus": "completed"
+  },
+  "operation": "sp_api:reports:2021-06-30:createReport",
+  "kind": "sp_report",
+  "artifacts": [],
+  "automation": null,
+  "parentMutationId": null,
+  "nextPageAvailable": false
+}

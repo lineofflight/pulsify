@@ -45,13 +45,31 @@ contexts include `adGroups`, `ads`, and all `targets`, as listing contexts do.
 Exclusions live in `negativeTargets`, with no bid and no metrics.
 Use the `get_mutation_schema` MCP tool for the accepted native payload schema.
 
+## Report completions and catalog operations
+
+`SELLING_REPORT_COMPLETED` and `ADS_REPORT_COMPLETED` are local Pulsify events.
+They need no Amazon subscription. Scheduled report ingestion finishes before the handler runs;
+customer-requested artifacts remain artifacts and are never imported automatically.
+`context.report` separates provider completion, transfer errors and ingestion status.
+`context.completeness` describes the selected local observations, not all rows held by Amazon.
+
+Save `operation_dependencies` alongside the code, mapping each qualified operation name to
+its `catalog_revision` and `schema_digest` from operation discovery. Typed aliases need no pin.
+Qualified outputs still use `{ target, action, payload }`, with native parameters under payload.
+`run_automation` validates the same pins, account boundaries and budgets without applying output.
+
+A run can output 50 mutations and 100,000 UTF-8 payload bytes, with a 500,000-byte envelope ceiling.
+Report contexts contain at most 50 entities per collection and 500,000 bytes in total.
+Each automation may have 10 outstanding report requests; report completion chains stop requesting
+further reports at depth 5. Receipt `automation` metadata records the execution digest and lineage.
+
 ## Install
 
 ```sh
 npm install --save-dev @lineofflight/pulsify-automations
 ```
 
-Version 2026.919.0. Types only — there is no runtime to import. The templates are
+Version 2026.920.0. Types only — there is no runtime to import. The templates are
 source you copy into an automation.
 
 ## Streams
@@ -59,6 +77,7 @@ source you copy into an automation.
 | Code | Name | Surface | Context | Fires when |
 | --- | --- | --- | --- | --- |
 | [`ACCOUNT_STATUS_CHANGED`](docs/account_status_changed.md) | Account Status Changed | Seller Central | seller | Seller account health transitions (NORMAL, AT_RISK, DEACTIVATED) |
+| [`ADS_REPORT_COMPLETED`](docs/ads_report_completed.md) | Ads Report Completed | Pulsify | report | A report request is finalized after artifact transfer and any scheduled ingestion |
 | [`AD_CHANGE`](docs/ad_change.md) | Ad Change | Amazon Ads | change | An ad is created or changes (state), in near real time |
 | [`AD_GROUP_CHANGE`](docs/ad_group_change.md) | Ad Group Change | Amazon Ads | change | An ad group is created or changes (state, name, default bid), in near real time |
 | [`ANY_OFFER_CHANGED`](docs/any_offer_changed.md) | Any Offer Changed | Seller Central | listing | Changes to the top 20 offers, Buy Box, or external prices for items you sell |
@@ -79,6 +98,7 @@ source you copy into an automation.
 | [`ORDER_CHANGE`](docs/order_change.md) | Order Change | Seller Central | listing | Order created, updated, or cancelled, enabling order-driven automations |
 | [`PRICING_HEALTH`](docs/pricing_health.md) | Pricing Health | Seller Central | listing | Your offer loses Buy Box eligibility due to uncompetitive pricing |
 | [`REPORT_PROCESSING_FINISHED`](docs/report_processing_finished.md) | Report Processing Finished | Seller Central | listing | A report has finished processing and is ready to download |
+| [`SELLING_REPORT_COMPLETED`](docs/selling_report_completed.md) | Selling Report Completed | Pulsify | report | A report request is finalized after artifact transfer and any scheduled ingestion |
 | [`SP_CONVERSION`](docs/sp_conversion.md) | SP Conversion | Amazon Ads | metrics | Hourly Sponsored Products attributed conversions and sales per campaign, ad group, ad, and keyword |
 | [`SP_TRAFFIC`](docs/sp_traffic.md) | SP Traffic | Amazon Ads | metrics | Hourly Sponsored Products impressions, clicks, and spend per campaign, ad group, ad, and keyword |
 | [`TARGET_CHANGE`](docs/target_change.md) | Target Change | Amazon Ads | change | A keyword or product target is created or changes (state, bid), in near real time |

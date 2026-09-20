@@ -4,7 +4,7 @@
 
 Hourly detail page glance views per ASIN. Requires Brand Analytics..
 
-[Amazon's documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#detail_page_traffic_event)
+[Amazon documentation](https://developer-docs.amazon.com/sp-api/docs/notification-type-values#detail_page_traffic_event)
 
 ## Default template
 
