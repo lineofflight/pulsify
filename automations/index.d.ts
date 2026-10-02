@@ -334,7 +334,7 @@ export interface ListingContext {
     }>;
     /** Major units (15.27). list_listings reports the same figure as 1527. Major units. */
     price: number | null;
-    /** Amazon product type for native listing patches. Use PRODUCT when absent. */
+    /** Amazon product type of the listing. Offer patches to /attributes/purchasable_offer send PRODUCT instead. */
     productType: string | null;
     /** YYYY-MM-DD the listing is back in stock. Null when unset. Writable on listings you fulfil yourself. */
     restockDate: string | null;
@@ -1486,7 +1486,7 @@ export interface ReportContext {
     negativeTargets: unknown;
     /** Major units (15.27). list_listings reports the same figure as 1527. Major units. */
     price: number | null;
-    /** Amazon product type for native listing patches. Use PRODUCT when absent. */
+    /** Amazon product type of the listing. Offer patches to /attributes/purchasable_offer send PRODUCT instead. */
     productType: string | null;
     /** YYYY-MM-DD the listing is back in stock. Null when unset. Writable on listings you fulfil yourself. */
     restockDate: string | null;

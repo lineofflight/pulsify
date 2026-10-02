@@ -218,7 +218,7 @@ function queueReprice(context, price, myOffer) {
     target: context.listing,
     action: "update",
     payload: {
-      productType: context.listing.productType || "PRODUCT",
+      productType: "PRODUCT",
       patches: [
         {
           op: "replace",

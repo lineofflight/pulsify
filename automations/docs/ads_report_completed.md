@@ -216,7 +216,7 @@ Projected currency values on context are in major units (15.27). Raw data snapsh
 | `listings[].mutations[].targetType` | string | no | Explicit type of the receipt target. |
 | `listings[].negativeTargets` | array | no | Exclusions: negative keywords and negative product targets, at ad-group and campaign level. Kept apart from targets and keywords because nothing bids on them and Amazon reports no performance for them, so they carry no bid and no metrics30. Update and archive them like any target. |
 | `listings[].price` | number | yes | Major units (15.27). list_listings reports the same figure as 1527. |
-| `listings[].productType` | string | yes | Amazon product type for native listing patches. Use PRODUCT when absent. |
+| `listings[].productType` | string | yes | Amazon product type of the listing. Offer patches to /attributes/purchasable_offer send PRODUCT instead. |
 | `listings[].restockDate` | string | yes | YYYY-MM-DD the listing is back in stock. Null when unset. Writable on listings you fulfil yourself. |
 | `listings[].shipping` | number | yes | Zero when Amazon fulfils. On a listing you fulfil, null until an offer event carries your own offer; Pulsify no longer polls for it. |
 | `listings[].shippingGroup` | string | yes | Merchant shipping template id, not its display name. Null until Amazon reports one; FBA listings have none. Writable on listings you fulfil yourself. |

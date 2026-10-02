@@ -16,7 +16,7 @@ function handle(event, context) {
     target: context.listing,
     action: "update",
     payload: {
-      productType: listing.productType || "PRODUCT",
+      productType: "PRODUCT",
       patches: [{
         op: "replace",
         path: "/attributes/purchasable_offer",
@@ -69,7 +69,7 @@ further reports at depth 5. Receipt `automation` metadata records the execution 
 npm install --save-dev @lineofflight/pulsify-automations
 ```
 
-Version 2026.920.0. Types only — there is no runtime to import. The templates are
+Version 2026.1002.0. Types only — there is no runtime to import. The templates are
 source you copy into an automation.
 
 ## Streams

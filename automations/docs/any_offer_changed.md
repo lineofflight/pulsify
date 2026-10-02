@@ -231,7 +231,7 @@ function queueReprice(context, price, myOffer) {
     target: context.listing,
     action: "update",
     payload: {
-      productType: context.listing.productType || "PRODUCT",
+      productType: "PRODUCT",
       patches: [
         {
           op: "replace",
@@ -869,7 +869,7 @@ Projected currency values on context are in major units (15.27). Raw data snapsh
 | `listing.negativeTargets[].text` | string | yes | The excluded keyword or product expression. Named text here and expression in the Ads API. |
 | `listing.negativeTargets[].type` | string | no | Explicit mutation target type. Use this object as the mutation target. |
 | `listing.price` | number | yes | Major units (15.27). list_listings reports the same figure as 1527. |
-| `listing.productType` | string | yes | Amazon product type for native listing patches. Use PRODUCT when absent. |
+| `listing.productType` | string | yes | Amazon product type of the listing. Offer patches to /attributes/purchasable_offer send PRODUCT instead. |
 | `listing.restockDate` | string | yes | YYYY-MM-DD the listing is back in stock. Null when unset. Writable on listings you fulfil yourself. |
 | `listing.shipping` | number | yes | Zero when Amazon fulfils. On a listing you fulfil, null until an offer event carries your own offer; Pulsify no longer polls for it. |
 | `listing.shippingGroup` | string | yes | Merchant shipping template id, not its display name. Null until Amazon reports one; FBA listings have none. Writable on listings you fulfil yourself. |

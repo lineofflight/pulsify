@@ -40,7 +40,7 @@ function handle(event, context) {
   //       target: context.listing,
   //       action: "update",
   //       payload: {
-  //         productType: listing.productType || "PRODUCT",
+  //         productType: "PRODUCT",
   //         patches: [{
   //         op: "replace",
   //         path: "/attributes/purchasable_offer",

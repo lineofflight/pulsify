@@ -40,7 +40,7 @@ function queueB2bReprice(context, price) {
     target: context.listing,
     action: "update",
     payload: {
-      productType: context.listing.productType || "PRODUCT",
+      productType: "PRODUCT",
       patches: [
         {
           op: "replace",
