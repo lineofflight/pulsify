@@ -32,11 +32,22 @@ function handle(event, context) {
   const winning = Boolean(myOffer.IsBuyBoxWinner);
   const buyBox = buyBoxPrice(summary, listing.condition);
 
-  // Buy box suppressed - no winner exists
+  // Cap ceiling with competitive threshold if available
+  const threshold = summary?.CompetitivePriceThreshold?.Amount;
+  const ceiling = threshold
+    ? Math.min(listing.ceiling, threshold)
+    : listing.ceiling;
+
+  // Buy box suppressed - no winner exists. Head back for the price we last won at.
+  const myPrice = myLanded - shipping;
   if (!winning && !buyBox) {
-    // Explore toward floor to try becoming buy-box eligible
-    const midpoint = (listing.floor + (myLanded - shipping)) / 2;
-    queueReprice(context, round(midpoint), myOffer);
+    const { held } = buyBoxMemory(context, myPrice, false);
+    const price = clamp(
+      recoveryPrice(held, myPrice, listing.floor),
+      listing.floor,
+      ceiling,
+    );
+    queueReprice(context, round(price), myOffer);
     return context;
   }
 
@@ -44,23 +55,22 @@ function handle(event, context) {
   // When winning, learn against the nearest one. When losing, against the Buy Box price.
   const buyBoxLanded = buyBox && landedPrice(buyBox);
   let compLanded = buyBoxLanded;
+  // A price Amazon suppressed us at caps a win, however high the competitor sits
+  let suppressionCap = Infinity;
   if (winning) {
+    const { suppressed } = buyBoxMemory(context, myPrice, true);
     const nearest = offers
       .filter((o) => o.SellerId !== sellerId && o.IsFeaturedMerchant)
       .map(landedPrice)
       .sort((a, b) => Math.abs(a - myLanded) - Math.abs(b - myLanded))[0];
 
-    // Note: When winning with no competitor, we stay put. Jumping to ceiling would
-    // cause ping-pong with suppression path. Not worth the complexity to track.
+    // Note: When winning with no competitor, we stay put. Searching for a higher price needs the Buy Box status
+    // to settle between moves, and nothing wakes this code up to wait for it.
     if (nearest === undefined) return context;
     compLanded = nearest;
+    suppressionCap = capUnder(suppressed, myPrice);
   }
 
-  // Cap ceiling with competitive threshold if available
-  const threshold = summary?.CompetitivePriceThreshold?.Amount;
-  const ceiling = threshold
-    ? Math.min(listing.ceiling, threshold)
-    : listing.ceiling;
   // Pricing above a Buy Box another seller holds can't win it back
   const maxLanded = winning
     ? ceiling + shipping
@@ -78,11 +88,51 @@ function handle(event, context) {
   const price = clamp(
     compLanded * (1 + delta) - shipping,
     listing.floor,
-    maxLanded - shipping,
+    Math.min(maxLanded - shipping, suppressionCap),
   );
   queueReprice(context, round(price), myOffer);
 
   return context;
+}
+
+// What the Buy Box status last told us about this offer: the price we had when it last turned to winning, and the
+// price we had when it last turned to suppressed.
+function buyBoxMemory(context, price, winning) {
+  const { asin, condition } = context.listing;
+  const key = `buybox:${context.marketplace?.marketplaceId}:${asin}:${condition}`;
+  const memory = context.store.get(key) || {};
+
+  // Amazon can report the status from before our last write for several writes after it, so only a change of status
+  // is evidence. Writing nothing else lets the record expire with the store, 7 days after the last change.
+  if (memory.winning !== winning) {
+    memory.winning = winning;
+    if (winning) memory.held = price;
+    else memory.suppressed = price;
+    context.store.set(key, memory);
+  }
+
+  return memory;
+}
+
+// The next price while the Buy Box is suppressed
+function recoveryPrice(held, price, floor) {
+  // Never won: explore toward the floor
+  if (held === undefined) return (floor + price) / 2;
+  // Still suppressed at or under a price we won at: the status is stale, or the market moved. Step under that
+  // price, doubling the gap each time, rather than cut toward the floor.
+  if (held >= price) {
+    return held - Math.max(held * CONVERGENCE_THRESHOLD, 2 * (held - price));
+  }
+  // Close enough to the price we won at: return to it
+  if ((price - held) / held < CONVERGENCE_THRESHOLD) return held;
+  return (held + price) / 2;
+}
+
+// The highest a winning price may go under one Amazon suppressed us at: halfway there, until within reach of it
+function capUnder(suppressed, price) {
+  if (!(suppressed > price)) return Infinity;
+  if ((suppressed - price) / price < CONVERGENCE_THRESHOLD) return price;
+  return (price + suppressed) / 2;
 }
 
 // Returns the delta to price at, relative to the competitor. Our current delta holds the price.
@@ -91,7 +141,7 @@ function learnBoundaries(context, myOffer, myLanded, compLanded, winning) {
   const key = boundaryKey(asin, condition, myOffer);
   const bounds = context.store.get(key) || { w: null, l: null, ts: null };
 
-  // Reset stale boundaries (24h TTL handled by Redis, but also check here)
+  // Reset stale boundaries: the store keeps them for 7 days
   const now = Date.now();
   if (bounds.ts && now - bounds.ts > 24 * 60 * 60 * 1000) {
     bounds.w = null;
