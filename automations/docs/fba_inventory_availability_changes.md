@@ -55,9 +55,14 @@ function handle(event, context) {
   //       payload: {
   //         productType: "PRODUCT",
   //         patches: [{
-  //         op: "replace",
-  //         path: "/attributes/purchasable_offer",
-  //         value: [{ our_price: [{ schedule: [{ value_with_tax: target }] }] }],
+  //           op: "merge",
+  //           path: "/attributes/purchasable_offer",
+  //           value: [{
+  //             marketplace_id: context.marketplace.marketplaceId,
+  //             currency: context.listing.currencyCode,
+  //             audience: "ALL",
+  //             our_price: [{ schedule: [{ value_with_tax: target }] }],
+  //           }],
   //         }],
   //       },
   //     });

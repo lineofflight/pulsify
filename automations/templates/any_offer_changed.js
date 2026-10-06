@@ -271,10 +271,13 @@ function queueReprice(context, price, myOffer) {
       productType: "PRODUCT",
       patches: [
         {
-          op: "replace",
+          op: "merge",
           path: "/attributes/purchasable_offer",
           value: [
             {
+              marketplace_id: context.marketplace.marketplaceId,
+              currency: context.listing.currencyCode,
+              audience: "ALL",
               our_price: [{ schedule: [{ value_with_tax: price }] }],
             },
           ],

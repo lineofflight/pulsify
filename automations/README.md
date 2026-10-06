@@ -18,9 +18,14 @@ function handle(event, context) {
     payload: {
       productType: "PRODUCT",
       patches: [{
-        op: "replace",
+        op: "merge",
         path: "/attributes/purchasable_offer",
-        value: [{ our_price: [{ schedule: [{ value_with_tax: price }] }] }],
+        value: [{
+          marketplace_id: context.marketplace.marketplaceId,
+          currency: context.listing.currencyCode,
+          audience: "ALL",
+          our_price: [{ schedule: [{ value_with_tax: price }] }],
+        }],
       }],
     },
   });
@@ -69,7 +74,7 @@ further reports at depth 5. Receipt `automation` metadata records the execution 
 npm install --save-dev @lineofflight/pulsify-automations
 ```
 
-Version 2026.1002.0. Types only — there is no runtime to import. The templates are
+Version 2026.1006.0. Types only — there is no runtime to import. The templates are
 source you copy into an automation.
 
 ## Streams

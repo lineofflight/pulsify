@@ -43,10 +43,12 @@ function queueB2bReprice(context, price) {
       productType: "PRODUCT",
       patches: [
         {
-          op: "replace",
+          op: "merge",
           path: "/attributes/purchasable_offer",
           value: [
             {
+              marketplace_id: context.marketplace.marketplaceId,
+              currency: context.listing.currencyCode,
               audience: "B2B",
               our_price: [{ schedule: [{ value_with_tax: price }] }],
             },
