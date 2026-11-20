@@ -209,7 +209,7 @@ Projected currency values on context are in major units (15.27). Raw data snapsh
 | `listings[].mutations[].payload` | object | no |  |
 | `listings[].mutations[].reconciliation` | object | no | What reconciliation established for an uncertain creation. Always empty on a listing. |
 | `listings[].mutations[].response` | object | no |  |
-| `listings[].mutations[].status` | string | no | "queued", "submitting", "submitted", "blocked", or "uncertain". Uncertain work is never blindly retried. |
+| `listings[].mutations[].status` | string | no | "queued", "submitting", "submitted", "blocked", "uncertain" or "unresolved". An interrupted patch is queued again; any other uncertain request holds the listing for 3 hours and then settles as "unresolved", which is final. |
 | `listings[].mutations[].submissionId` | string | no | Amazon's submissionId for the patch that carried this mutation. |
 | `listings[].mutations[].submittedAt` | string | no | ISO 8601 timestamp when Amazon's response was recorded. |
 | `listings[].mutations[].targetId` | string | no |  |

@@ -74,7 +74,7 @@ further reports at depth 5. Receipt `automation` metadata records the execution 
 npm install --save-dev @lineofflight/pulsify-automations
 ```
 
-Version 2026.1006.0. Types only — there is no runtime to import. The templates are
+Version 2026.1120.0. Types only — there is no runtime to import. The templates are
 source you copy into an automation.
 
 ## Streams
